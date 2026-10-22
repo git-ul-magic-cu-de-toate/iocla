@@ -1,0 +1,409 @@
+Examen CC IOCLA 2024 var 1
+
+
+1.
+
+a. Dandu-se doua numere pe cate 32 de biti, aflati daca suma lor produce overflow, fara a folosi instructiunea cmp. Pentru testare, folositi perechile de variabile a1 si b1 si a2 si b2, deja definite ın program. In cazul ın care se produce overflow afisati "Go on a diet, Pisi", altfel "You can eat more bacalhau". Atentie! Este interzisa folosirea instructiunii cmp.
+
+b. Determinati pentru un numar pe 2 bytes primul bit setat ıncepand din partea stanga (a reprezentarii binare
+little endian). Pentru testare, folositi variabila n, deja definita ın program si afisati pozitia pe care se regaseste bitul.
+Aceasta este o valoare din intervalul [0, 15].
+
+c. Pentru toate elementele vectorului arr care au primul octet din partea dreapta (a reprezentarii little endian)
+egal cu 0x34, ınlocuiti acest octet cu 0x61. La final, afisati vectorul rezultat ca sir de caractere.
+
+
+
+2. 
+
+Cunoscand ca securitatea argumentelor servite functiei main este importanta, studentii s-au decis sa o testeze si ın
+limbaj de asamblare.
+
+a. In cadrul functiei main, cititi argumentele date ın linia de comanda si salvati ıntr-o variabila de tip int retinuta
+pe stiva, numarul de argumente care convertite, cu ajutorul functiei atoi, rezulta ıntr-un numar natural nenul. Afisati
+contorul la final. Pentru testare, rulati ./file aaa 2 3 b 1. (5 puncte)
+
+b. In cadrul functiei main, parcurgeti argumentele date ın linia de comanda si salvati ıntr-un vector declarat pe
+stiva toate numerele naturale nenule continute de acest sir. Atentie! Elementele salvate ın vectorul rezultat trebuie
+sa fie de tip int (adica vor fi convertite tot cu ajutorul functiei atoi). Afisati vectorul rezultat, folosindu-va, de
+asemenea, de contorul determinat la punctul a. (5 puncte)
+
+c. Creati functia to_int cu semnatura int to_int(int n, int *v) care returneaza concatenarea celor n cifre
+retinute ın vectorul dat ca argument. Spre exemplu, pentru vectorul 1, 2, 3, 4, 5, functia to_int returneaza numarul
+12345. Este garantat faptul ca rezultatul ıncape ıntr-un element de tip int si faptul ca nu aveti de concatenat
+decat cifre. Pentru verificare folositi vectorul salvat pe stiva la punctul b., si numarul de elemente calculat la punctul
+a.. Atentie! Pentru acest subpunct, aveti grija sa dati ca argumente executabilului numere formate dintr-o singura
+cifra nenula.
+
+
+
+
+task 1:
+
+
+%include "printf32.asm"
+
+section .data
+    a1 dd 0x40000000
+    b1 dd 0x40000001
+    a2 dd 0x0
+    b2 dd 0x10
+    n dw 0xA01
+    arr dw 0x3448, 0x3434, 0x6B63, 0x6E69, 0x2067, 0x6874, 0x2065, 0x6F77, 0x6C72, 0x2E64
+    len equ $-arr
+    msg_overflow db "Go on a diet, Pisi", 0
+    msg_no_overflow db "You can eat more bacalhau", 0
+
+section .text
+extern printf
+global main
+
+main:
+    push ebp
+    mov ebp, esp
+
+
+    ; TODO a: Determine whether the sum of 2 ints results in overflow
+    ; Test with first pair a1, b1
+    mov eax, [a1]
+    mov ebx, [b1]
+    add eax, ebx           ; Add the numbers
+    jo overflow_detected1  ; If overflow flag is set, jump to overflow handling
+
+    ; No overflow, print message
+    push msg_no_overflow
+    call printf
+    add esp, 4             ; Clean the stack
+    jmp end_test1          ; Skip the overflow message
+
+overflow_detected1:
+    ; PRINTF32 `Go on a diet, Pisi\n\x0`
+    push msg_overflow
+    call printf
+    add esp, 4
+
+end_test1:
+    ; Test with second pair a2, b2
+    mov eax, [a2]
+    mov ebx, [b2]
+    add eax, ebx           ; Add the numbers
+    jo overflow_detected2  ; If overflow flag is set, jump to overflow handling
+
+    ; No overflow, print message
+    push msg_no_overflow
+    call printf
+    add esp, 4             ; Clean the stack
+    jmp main_b         ; Skip the overflow message
+
+overflow_detected2:
+    push msg_overflow
+    call printf
+    add esp, 4
+
+main_b:
+    ; TODO b: Determine the position of the first set bit starting from the
+    ; left for the little endian representation of a 16 bit number
+    xor eax, eax
+    xor ebx, ebx
+    xor edx, edx
+
+    ; Load the 16-bit value from memory location of n into ax (lower part of eax)
+    mov ax, word [n]
+
+    ; Reset ebx and set it up for the mask
+    xor ebx, ebx
+    mov ebx, 1
+    shl ebx, 15      ; Set the leftmost bit of ebx (16th bit) for scanning from left to right
+
+    ; Set edx as the counter for loop iterations from 15 to 0
+    mov edx, 15
+
+loop1:
+    ; Clear ecx before using it to store results
+    xor ecx, ecx
+    mov ecx, ebx   ; Copy the current mask from ebx to ecx
+
+    ; Perform bitwise AND between the number and the mask to isolate the bit
+    and cx, ax     ; AND operation between lower 16 bits of ecx and ax
+    cmp cx, 0      ; Compare the result with 0 to check if the bit is set
+    je not_found   ; If the result is zero, it means bit at current mask position is not set
+
+found:
+    ; If we get here, it means we found the first set bit
+    jmp main_c     ; Jump out of the loop to handle the found bit
+
+not_found:
+    ; If the bit was not found, prepare for the next iteration
+    dec edx        ; Decrement the bit position counter
+    shr ebx, 1     ; Shift the mask right by one to check the next bit
+    cmp edx, 0     ; Check if we have checked all bits
+    jae loop1      ; If edx is still above or equal to 0, continue the loop
+
+main_c:
+    PRINTF32 `%d\n\x0`, edx
+
+    ; TODO c: For every short saved in arr, replace the first byte starting
+    ; from the right for the little endian representation of the number that
+    ; is equal to 0x34 with 0x61.
+    xor eax, eax
+    xor ebx, ebx
+    xor ecx, ecx
+    xor edx, edx
+
+    mov ebx, 0
+
+loop2:
+    xor eax, eax
+    mov ax, word [arr + ebx * 2]
+    cmp al, 0x34
+    jne cond2
+
+    mov al, 0x61
+    mov [arr + ebx * 2], ax
+    xor ecx, ecx
+    
+
+cond2:
+    mov cl, al
+    PRINTF32 `%c\x0`, ecx
+
+    mov cl, ah
+    PRINTF32 `%c\x0`, ecx
+    inc ebx
+    cmp ebx, 10
+    jb loop2
+
+
+done:
+    ; Return 0.
+    xor eax, eax
+    leave
+    ret
+
+
+
+
+
+
+task 2:
+
+
+
+extern printf
+extern atoi
+
+section .data
+    fmt_int db "%d", 0
+    fmt_int_newline db "%d", 10, 0
+    fmt_int_space db "%d ", 0
+    newline db 10, 0
+
+section .text
+global main
+
+; TODO c: Implement `int to_int(int n, int *v)` that concatenates
+; all n numbers from v into a new one
+; It is guaranteed that the result will fit into an int value
+
+to_int:
+    push ebp
+    mov ebp, esp
+
+    ; Salvează registrele care vor fi modificate în cadrul funcției
+    push ebx            ; Salvează ebx pe stivă (folosit pentru indexare)
+    push edi            ; Salvează edi pe stivă (nu este folosit în acest fragment)
+    push esi            ; Salvează esi pe stivă (nu este folosit în acest fragment)
+
+    ; Inițializare parametri funcție
+    mov ebx, [ebp + 8]  ; ebx primește valoarea lui n (numărul de cifre)
+    mov ecx, [ebp + 12] ; ecx primește adresa vectorului v (adresa de început a vectorului de cifre)
+
+    ; Inițializează eax care va stoca numărul final concatenat
+    mov eax, 0          ; eax este inițializat la 0 pentru a începe concatenarea
+    dec ebx             ; Decrementăm ebx pentru a folosi indexarea de la 0 (dacă n este 5, indexăm de la 4 la 0)
+
+; Începe bucla care formează numărul prin concatenare
+end2:
+    mov edx, [ecx + ebx * 4] ; Încarcă cifra curentă în edx (ebx * 4 pentru că fiecare int are 4 bytes)
+    
+    imul eax, 10       ; Înmulțește eax cu 10 pentru a "muta" cifrele la stânga (prepară numărul pentru adăugarea următoarei cifre)
+    add eax, edx       ; Adaugă cifra curentă la numărul format
+
+    dec ebx            ; Decrementăm indexul pentru a procesa următoarea cifră
+    cmp ebx, 0         ; Compară ebx cu 0 pentru a verifica dacă am procesat toate cifrele
+    jge end2           ; Dacă ebx este mai mare sau egal cu 0, bucla continuă
+
+; Curățirea stivei și pregătirea pentru ieșire
+    pop esi            ; Restaurează registrul esi
+    pop edi            ; Restaurează registrul edi
+    pop ebx            ; Restaurează registrul ebx
+    
+    leave
+    ret
+
+main:
+    push ebp
+    mov ebp, esp
+
+
+    ; TODO a: Traverse all command-line arguments and compute
+    ; how many of them represent a natural number
+    ; The result value must be placed on stack
+    ; NOTE: You must print the result afterwards
+    ; HINT: man atoi (https://man7.org/linux/man-pages/man3/atoi.3.html)
+
+    ; Movind numărul de argumente în registrul ECX
+    mov ecx, [ebp + 8]
+    ; Movind adresa vectorului de argumente (argv) în EBX
+    mov ebx, [ebp + 12]
+    ; Scădem 1 din ECX pentru a nu include numele programului în bucla de procesare
+    dec ecx
+    ; Inițializăm EDI la 1 pentru a începe de la primul argument după numele programului
+    xor edi, edi
+    mov edi, 1
+    ; Alocăm spațiu pe stivă pentru contorul numerelor naturale nenule
+    sub esp, 4
+    ; Inițializăm acest contor cu zero
+    mov dword [esp], 0
+
+; Eticheta pentru bucla principala
+loop1:
+    ; Salvăm starea registrelor curente pe stivă
+    push ebx
+    push edi
+    push ecx
+    ; Obținem adresa argumentului curent
+    mov esi, [ebx + edi * 4]
+    ; Trimitem această adresă la atoi
+    push esi
+    call atoi
+    ; Curățăm stiva după apelul lui atoi
+    add esp, 4
+    ; Restaurăm starea registrelor
+    pop ecx
+    pop edi
+    pop ebx
+    ; Comparam rezultatul lui atoi (în EAX) cu 0
+    cmp eax, 0
+    ; Dacă este mai mic sau egal cu zero, sărim la cond1
+    jbe cond1
+
+    ; Dacă rezultatul este mai mare decât zero, incrementăm contorul de pe stivă
+    inc dword [esp]
+    ; Salt necondiționat la cond1 pentru a continua bucla
+    jmp cond1
+
+; Eticheta pentru condiția de ieșire sau continuare a buclei
+cond1:
+    ; Incrementăm EDI pentru a trece la următorul argument
+    inc edi
+    ; Comparăm EDI cu ECX pentru a vedea dacă am procesat toate argumentele
+    cmp edi, ecx
+    ; Dacă EDI este mai mic sau egal cu ECX, continuăm bucla
+    jbe loop1
+
+    ; Dacă am terminat bucla, obținem valoarea contorului de pe stivă în EAX
+    mov eax, [esp]
+    ; Pregătim argumentele pentru apelul lui printf
+    push eax
+    push fmt_int_newline
+    call printf
+    ; Curățăm stiva după printf
+    add esp, 8
+
+
+    ; TODO b: Convert all command-line arguments that represent a
+    ; number to int and save them in an array placed on stack
+    ; NOTE: You must print the array afterwards; you may use the
+    ; value computed at task a in doing so
+    ; HINT: man atoi (https://man7.org/linux/man-pages/man3/atoi.3.html)
+
+    ; Primește valoarea inițială din stivă
+    mov eax, [esp]
+    ; Numărul de argumente este stocat în [ebp + 8]
+    mov ecx, [ebp + 8]
+    ; Adresa vectorului de argumente este stocată în [ebp + 12]
+    mov ebx, [ebp + 12]
+    ; Se decrementează numărul de argumente pentru a exclude numele programului
+    dec ecx
+    ; Inițializare index pentru argumente
+    xor edi, edi
+    mov edi, 1
+
+loop2:
+    ; Salvăm contextul curent pentru a proteja registrul eax și alte registre folosite
+    push eax
+    push ebx
+    push edi
+    push ecx
+    ; Accesăm adresa argumentului curent în esi
+    mov esi, [ebx + edi * 4]
+    ; Împingem adresa argumentului în stivă pentru atoi
+    push esi
+    call atoi
+    ; Curățăm stiva după apelul atoi (restabilind 4 octeți)
+    add esp, 4
+    ; Restaurăm contextul pentru a continua execuția
+    pop ecx
+    pop edi
+    pop ebx
+    ; Comparăm rezultatul atoi pentru a verifica dacă este un număr natural nenul
+    cmp eax, 0
+    jbe comp2  ; Sărim la comp2 dacă numărul este mai mic sau egal cu zero
+
+lol2:
+    ; Dacă numărul este valid, îl stocăm pe stivă
+    mov edx, eax
+    pop eax
+    sub esp, 4
+    mov [esp], edx
+    jmp cond2
+
+comp2:
+    ; Restaurăm valoarea lui eax dacă numărul nu este valid
+    pop eax
+
+cond2:
+    ; Incrementăm indexul pentru a trece la următorul argument
+    inc edi
+    ; Verificăm dacă toate argumentele au fost procesate
+    cmp edi, ecx
+    jbe loop2  ; Continuăm bucla dacă mai sunt argumente
+
+    ; După finalizarea buclei, decrementăm eax pentru a indica sfârșitul procesării
+    dec eax
+
+end:
+    ; Obținem un număr stocat pe stivă și îl afișăm
+    mov ebx, [esp + eax * 4]
+    push eax
+    push ebx
+    push fmt_int_space
+    call printf
+    add esp, 8
+    ; Restaurăm eax pentru a verifica dacă trebuie să continuăm afișarea
+    pop eax
+    dec eax
+    ; Dacă eax este încă pozitiv, repetăm afișarea
+    cmp eax, 0
+    jge end
+
+    ; TODO c: Call `to_int` with the value computed at task a and
+    ; the array got at task b
+
+c:
+    mov eax, [ebp - 4]
+    push esp
+    push eax
+    call to_int
+    add esp, 8
+
+    push eax
+    push fmt_int_newline
+    call printf
+    add esp, 8
+
+    ; Return 0.
+    xor eax, eax
+    leave
+    ret

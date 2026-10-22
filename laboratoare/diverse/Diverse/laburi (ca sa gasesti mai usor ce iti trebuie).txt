@@ -1,0 +1,95 @@
+lab 1 - reprezentare-numere (operatii pe biti + pointeri)
+
+lab 2 - operatii-memorie-gdb (comenzi utile gdb, void *, dimensiuni date, padding structuri, packed)
+
+lab 3 - etapele-compilarii (exemple makefile in exercitii cu linkare, utilitare linkare ld + argumente comanda, nm, readelf, _start())
+	gcc -c -o app.o app.c => fisier obiect
+	gcc -o app app.o => linkare fisier obiect si creare executabil
+
+	Dacă avem mai multe fișiere sursă C, invocăm compilatorul pentru fiecare fișier și apoi linker-ul:
+	gcc -c -o helpers.o helpers.c
+	gcc -c -o app.o app.c
+	gcc -o app app.o helpers.o
+	Ultima comandă este comanda de linking, care leagă fișierele obiect app.o și helpers.o în fișierul executabil app.
+
+	gcc -L<directory> => adauga directoare in care cauta biblioteci (lib) la linkare
+
+lab 4 - toolchain-decompilare (godbolt -> flaguri, ghidra)
+
+lab 5 - introducere-assembly (instructiuni: xchg, not, fibonacci)
+	PRINTF32:
+
+	%include "printf32.asm" / %include "../utils/printf32.asm"  ; din directorul cu laboratoarele
+
+	section .data
+		myString: db "Hello, World!", 0
+
+	section .text
+    		global main
+    		extern printf
+
+	main:
+    		PRINTF32 `%d\n\x0`, eax
+		PRINTF32 `%s\n\x0`, myString
+
+lab 6 - rolul-registrelor (declarare variabile, adresarea memoriei, inmultirea a doua numere, impartirea a doua numere, puteri ale lui 2)
+
+	section .data
+		var2       DB ?     ; Declară un octet neinițializat etichetat cu "var2".
+
+lab 7 - structuri-vectori-siruri
+
+	STRUCTURI:
+
+	struc mystruct
+    		a:    resw 1    ; a va referi un singur element de dimensiune un cuvânt
+    		b:    resd 1    ; b va referi un singur element de dimensiune un dublu cuvânt
+    		c:    resb 1    ; c va referi un singur element de dimensiune un octet
+    		d:    resd 1    ; d va referi un singur element de dimensiune un dublu cuvânt
+    		e:    resb 6    ; e va referi 6 elemente de dimensiune un octet
+	endstruc
+
+	ca sa folosesti aceleasi campuri pentru mai multe structuri:
+
+	struc mystruct1
+   		.a:    resw 1
+   		.b:    resd 1
+	endstruc
+
+	struc mystruct2
+   		.a:    resd 16
+   		.b:    resw 1
+	endstruc
+
+	initializare:
+
+	struct_var:           				; asta e numele variabilei (adresa de unde incepe structura)
+    		istruc mystruct    			; aici ai numele structuri       
+        		at a, dw        -1
+        		at b, dd        0x12345678
+        		at c, db        ' '
+        		at d, dd        23
+        		at e, db        'Gary', 0
+    		iend
+	
+	În cazul în care definiți câmpurile structurii folosind . (dot), instanțierea structurii se face în felul următor:
+
+	struct_var:
+    		istruc mystruct
+        		at mystruct.a, dw        -1
+        		at mystruct.b, dd        0x12345678
+        		at mystruct.c, db        ' '
+        		at mystruct.d, dd        23
+        		at mystruct.e, db        'Gary', 0
+   		iend
+
+De exemplu, pentru a declara un vector de 100 de cuvinte inițializate cu valoarea 42, vom folosi construcția:
+
+section .data
+    myVect:    times 100    dw 42
+Pe de altă parte, dacă dorim declararea unui vector de 20 de elemente dublu cuvinte neinițializate, folosim instrucțiuni din familia res astfel:
+
+section .bss
+    myVect:    resd 20
+		
+

@@ -1,0 +1,418 @@
+Examen CC 2024 IOCLA VAR 2
+
+
+
+1. 
+
+Afland ca arta de a fi Xen (a se citi ”Zen”) consta ın a face calcule folosind operatii pe biti, bobocii s-au pus pe
+treaba. Urmariti si voi, ıncercarea lor de relaxare.
+
+a. Dandu-se un numar pe 32 de biti, verificati daca numarul format din prima jumatate a bitilor sai este egal cu
+negatul numarului format din cea de-a doua jumatate a bitilor sai. Pentru testare, folositi variabila n1 si variabila n2,
+deja definite ın program. In cazul ın care conditia este ındeplinita, afisati "I am Xen", altfel "I am not Xen". (5 puncte)
+
+b. Afisati suma ultimelor cifre ale tuturor numerelor salvate ın vectorul arr1. (5 puncte)
+
+c. Printati toate perechile de elemente aflate pe pozitii de forma 3k si 3k + 2 din vectorul arr2 care au al doilea
+numar egal cu negatul primului - 1. Cu alte cuvinte, primul element al perechii se afla pe o pozitie divizibila cu 3, iar
+al doilea element al tuplului este un numar aflat la 2 pozitii distanta de primul element al perechii. Atentie! Valoarea
+lui k ıncepe de la 0.
+
+
+2. 
+
+Stiind ca la retelistica reprezentarea favorita pentru numere este cea hexa, ındrumatorii de an va propun urmatoarele
+task-uri de ıncalzire.
+
+a. Creati functia read_array, cu semnatura void read_array(int *n, int *v), care citeste de la tastatura un
+numar ıntreg n si apoi, n elemente ıntregi ale vectorului v ın format hexa, folosind functia scanf. Apelati functia
+read_array(int *n, int *v) cu n si v declarate de voi ın ce sectiune doriti. Puteti considera ca numarul maxim de
+elemente citite este 100. Pentru verificare, printati vectorul citit, tot ın format hexa. (5 puncte)
+
+b. Creati functia print_ip cu semnatura void print_ip(int n), care printeaza cei 4 bytes ai numarului n ın
+format ip. Formatul ip presupune printarea byte cu byte, ıncepand cu primul din partea dreapta a reprezentarii little
+endian (cel mai semnificativ octet), fiecare byte fiind despartit de cate un punct. Spre exemplu: pentru numarul
+100, reprezentarea ip este 0.0.0.100 pentru numarul 25600, reprezentarea ip este 0.0.100.0 pentru numarul 6553600,
+reprezentarea ip este 0.100.0.0 pentru numarul 1677721600, reprezentarea ip este 100.0.0.0. Un exemplu mai detaliat
+ar fi numarul 356, cu reprezentarea ip 0.0.1.100. 356 are reprezentarea hexa 0x164 care este ımpartita ın octetii 0x00,
+0x00, 0x1 si 0x64. Pentru verificare, folositi primul element salvat ın vectorul citit la punctul anterior. (5 puncte)
+
+c. Creati functia recursiva fibo cu semnatura int fibo(int n) care calculeaza al n-lea element al sirului
+Fibonacci ın mod recursiv. Este garantat ca rezultatul ıncape ıntr-un element de tip int. Atentie! Numerotarea
+elementelor din cadrul secventei Fibonacci ıncepe de la 0. Cu alte cuvinte pentru secventa 0, 1, 1, 2, 3, 5 ..., 0 se afla
+pe pozitia 0, 1 pe pozitia 1, 1 pe pozitia 2, 2 pe pozitia 3, 3 pe pozitia 4 etc
+
+
+
+
+
+task 1:
+
+%include "printf32.asm"
+
+section .data
+    n1 dd 65535
+    n2 dd 67174399
+    arr1 dd 1, 22, 313, 5125, 818, 0
+    len1 equ $-arr1
+    arr2 dw 1, 0, -3, 5, 91, -7
+    len2 equ $-arr2
+
+section .text
+global main
+
+main:
+    push ebp
+    mov ebp, esp
+
+
+    ; TODO a: Determine whether a 4 bytes number has the first 16 bits
+    ; equal to the second 16 bits negated
+    mov eax, [n1]           ; Copiază valoarea din memoria indicată de 'n1' în registrul EAX.
+    xor ebx, ebx            ; Setează registrul EBX la 0. Aceasta este o metodă comună de a curăța un registru.
+    mov bx, ax              ; Copiază cei mai puțin semnificativi 16 biți din EAX (AX) în partea inferioară a lui EBX (BX).
+
+    shr eax, 16             ; Deplasează conținutul lui EAX cu 16 biți la dreapta. Asta mută biții 16-31 în poziția 0-15.
+    not ax                  ; Negați cei 16 biți inferiori din EAX. Acest lucru schimbă fiecare bit: 0 devine 1, și 1 devine 0.
+
+    cmp eax, ebx            ; Compară registrul EBX (care are partea superioară la 0 și partea inferioară egală cu primii 16 biți din EAX)
+                            ; cu EAX (care acum conține negația celui de-al doilea set de 16 biți).
+    je zen                  ; Dacă valorile sunt egale (adică ZF este setat), sare la eticheta 'zen'.
+
+    PRINTF32 `I am not Xen\n\0`  ; Printează mesajul "I am not Xen". Acesta este apelul la macro-ul PRINTF32, care presupunem
+                            ; că funcționează similar cu printf în C, pentru a afișa șiruri de caractere.
+    jmp gata_a              ; Sare la eticheta 'gata_a' pentru a evita executarea codului de sub eticheta 'zen'.
+
+zen:
+    PRINTF32 `I am Xen\n\0` ; Dacă comparația a fost egală, printează "I am Xen".
+gata_a: 
+
+
+    ; TODO b: Determine the sum of the last digit for the numbers saved
+    ; in arr1
+    mov esi, arr1
+    xor ecx, ecx
+    xor ebx, ebx
+    mov edi, 10
+
+suma:
+    mov eax, [esi + 4 * ecx]
+    xor edx, edx
+    div edi
+    add ebx, edx
+    inc ecx
+    cmp ecx, 6
+    jne suma
+
+    PRINTF32 `%d\n\0`, ebx
+
+
+    ; TODO c: Print all pairs from arr2 that have the first number on a 3k
+    ; index, the second number on a 3k + 2 index and the second number
+    ; equal to the first number negated - 1
+    xor ecx, ecx            ; ECX este inițializat la 0. ECX este folosit ca index în array.
+    mov esi, arr2           ; ESI este setat la adresa de început a array-ului 'arr2'.
+
+pereche:
+    xor eax, eax            ; Curăță registrul EAX.
+    xor ebx, ebx            ; Curăță registrul EBX.
+    add ecx, 2              ; Adaugă 2 la ECX, mișcându-se la indexul presupus 3k + 2.
+
+    cmp ecx, 6              ; Compară ECX cu 6. Presupunem că 6 este limita superioară a indexilor validați.
+    jl e_bine               ; Dacă ECX este mai mic decât 6, continuă la eticheta 'e_bine'.
+    jmp end_c               ; Dacă nu, sări la eticheta 'end_c' pentru a termina.
+
+e_bine:
+    sub ecx, 2              ; Scade 2 din ECX, revenind la indexul 3k.
+    mov ax, [esi + 2 * ecx] ; Mută valoarea de la indexul 3k din 'arr2' în partea inferioară a lui EAX.
+    mov bx, [esi + 2 * ecx + 4] ; Mută valoarea de la indexul 3k + 2 din 'arr2' în partea inferioară a lui EBX.
+
+    PRINTF32 `%hi %hi\n\0`, eax, ebx ; Afișează perechea de numere formată din valori de la indexii 3k și 3k + 2.
+
+    add ecx, 3              ; Adaugă 3 la ECX pentru a ajunge la următorul index 3k valid.
+    cmp ecx, 6              ; Compară din nou ECX cu 6.
+    jl pereche              ; Dacă este mai mic decât 6, reia bucla la eticheta 'pereche'.
+
+end_c:
+
+    ; Return 0.
+    xor eax, eax
+    leave
+    ret
+
+
+
+
+
+task 2:
+
+
+
+extern printf
+extern scanf
+
+section .data
+    fmt_int db "%d", 0
+    fmt_int_newline db "%d", 10, 0
+    fmt_int_hexa db "%x", 0
+    fmt_int_hexa_space db "0x%x ", 0
+    fmt_ip db "%d.%d.%d.%d", 10, 0
+    newline db 10, 0
+
+section .bss
+    res resb 400
+    length resb 4
+    
+section .text
+global main
+
+; TODO a: Implement `void read_array(int *n, int *v)` which reads
+; an integer, stores it at the address pointed by n, and then proceeds
+; to read an array of n integers in hex format
+
+read_array:
+    push ebp
+    mov ebp, esp
+
+    push ebx                  ; Salvează registrele EBX, ESI, EDI pe stack pentru a le restaura la sfârșit
+    push esi
+    push edi
+
+    mov eax, [ebp + 8]        ; Adu adresa variabilei 'n' în EAX
+    push eax                  ; Pune adresa pe stack ca argument pentru scanf
+    push fmt_int              ; Pune adresa formatului de citire pentru un întreg (%d)
+    call scanf                ; Apel scanf pentru a citi un întreg și a-l stoca la adresa indicată de EAX
+    add esp, 8                ; Curăță argumentele de pe stack
+
+    mov eax, [ebp + 8]        ; Adu adresa lui 'n' din nou în EAX
+    mov ecx, [eax]            ; Adu valoarea lui 'n' în ECX (numărul de elemente de citit)
+    mov ebx, 0                ; Inițializează EBX la 0 (va fi folosit ca index în bucla de citire)
+
+loop2:
+    push ecx                  ; Salvează ECX pe stack pentru a păstra numărul de elemente
+    mov edx, [ebp + 12]       ; Adu adresa array-ului 'v' în EDX
+    push ebx                  ; Salvează EBX pe stack (indexul curent)
+    imul ebx, 4               ; Înmulțește EBX cu 4 (offsetul în bytes pentru elemente int)
+    add edx, ebx              ; Adaugă offsetul la adresa de bază a array-ului (calcul adresa elementului curent)
+    push edx                  ; Pune adresa elementului curent pe stack ca argument pentru scanf
+    push fmt_int_hexa         ; Pune formatul de citire hexazecimal (%x)
+    call scanf                ; Apel scanf pentru a citi un întreg hexazecimal la adresa indicată de EDX
+    add esp, 8                ; Curăță argumentele de pe stack
+    pop ebx                   ; Restaurează EBX (indexul curent)
+    pop ecx                   ; Restaurează ECX (numărul de elemente)
+    inc ebx                   ; Incrementează indexul
+    cmp ebx, ecx              ; Compară indexul cu numărul de elemente
+    jb loop2                  ; Dacă indexul este mai mic decât numărul de elemente, continuă bucla
+
+    pop edi                   ; Restaurează registrele salvate
+    pop esi
+    pop ebx
+
+    leave
+    ret
+
+
+print_array:
+    push ebp
+    mov ebp, esp
+
+    push ebx
+    push esi
+    push edi
+
+    mov esi, [ebp + 8]
+    mov ebx, [ebp + 12]
+    mov edi, 0
+loop3:
+    mov eax, [ebx + edi * 4]
+    push eax
+    push fmt_int_hexa_space
+    call printf
+    add esp, 8
+
+    inc edi
+    cmp edi, esi
+    jl loop3
+
+
+    pop edi
+    pop esi
+    pop ebx
+
+    leave
+    ret
+
+
+
+; TODO b: Implement `void print_ip(int n)` that prints the ip format
+; of n
+
+print_ip:
+    push ebp
+    mov ebp, esp
+
+    pusha
+
+    
+
+    xor ebx, ebx
+    xor ecx, ecx
+    xor edx, edx
+    mov dl, byte al
+    shr eax, 8
+    mov cl, byte al
+    shr eax, 8
+    mov bl, byte al
+    shr eax, 8
+
+    push edx
+    push ecx
+    push ebx
+    push eax
+    push fmt_ip
+    call printf
+    add esp, 20
+
+
+    popa
+
+    leave
+    ret
+
+; TODO c: Implement `int fibo(int n)` that recursively determines
+; the nth Fibonacci sequence element
+
+fibo:
+    push ebp
+    mov ebp, esp
+
+    mov ecx, [ebp + 8] ; n
+    xor eax, eax ; facem valoarea de return 0
+    dec eax ; -1 momentan
+    ; nu putem avea un index mai mic decat 1
+
+    cmp ecx, 0
+    jle endfib ; deja avem -1 valoarea de return
+
+    inc eax ; revine la 0 daca nu avem index mai mic de 1
+
+    cmp ecx, 1 ; caz de baza n = 1, f(1) = 0
+    je endfib
+
+    cmp ecx, 2 ; caz de baza n = 2, f(2) = 1
+    je endfibplus1
+    ; daca nu avem caz de baza, trebuie apel recursiv
+
+    ; prima parte ( f(n-1) )
+    dec ecx ; decrementam ecx ca sa devina n - 1
+    push ecx ; salvam ecx deoarece se va modifica in apelurile recursive +
+              ;parametrul pentru apelul recursiv
+    call fibo ; primul apel recursiv
+    pop ecx ; restauram stiva
+    ; acum avem in eax prima parte
+
+    ; a doua parte ( f(n-2) )
+    push eax ; salvam f(n-1)
+    dec ecx ; n - 1 - 1 = n - 2
+    push ecx ; arg functiei
+    call fibo
+    add esp, 4 ; restauram stiva
+
+    pop edx ; luam prima parte in edx
+    add eax, edx ; adaugam in eax prima parte si a doua parte
+    jmp endfib ; skip incremetarea cu 1
+
+endfibplus1:
+    inc eax ; 0 + 1 = 1
+
+endfib:
+    leave
+    ret
+
+
+
+sauuuuuuu
+
+
+fibo:
+    push ebp
+    mov ebp, esp
+
+    push ebx
+    push edi
+    push esi
+
+    mov edx, [ebp + 8]
+    sub edx, 2
+    mov eax, 0
+    mov ebx, 1
+fiboRec:
+    add eax, ebx
+    push eax
+    push ebx
+    pop eax
+    pop ebx
+    dec edx
+    cmp edx, 0
+    jnl fiboRec
+
+    mov eax, ebx
+
+    pop esi
+    pop edi
+    pop ebx
+
+    leave
+    ret
+
+
+main:
+    push ebp
+    mov ebp, esp
+
+
+    ; TODO a: Call `read_array` with the address of a variable saved
+    ; wherever as the length of the array and the array saved in a
+    ; section of your choice
+    ; NOTE: You must print the array afterwards in hex format
+
+    mov eax, length
+    mov ebx, res
+    push ebx
+    push eax
+    call read_array
+    add esp, 8
+
+    mov eax, [length]
+    mov ebx, res
+    push ebx
+    push eax
+    call print_array
+    add esp, 8
+
+    ; TODO b: Call `print_ip` with the first element stored
+    ; in the array read at task a
+
+    xor eax, eax
+    mov eax, [res]
+    push eax
+    call print_ip
+    add esp, 4
+
+    ; TODO c: Call `fibo` with a value for n of your choice
+    ; NOTE: You must print the result afterwards
+
+    mov eax, 0x6
+    push eax
+    call fibo
+    add esp, 4
+
+    push eax
+    push fmt_int_newline
+    call printf
+    add esp, 8
+
+    ; Return 0.
+    xor eax, eax
+    leave
+    ret

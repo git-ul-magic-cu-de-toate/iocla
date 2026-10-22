@@ -1,0 +1,206 @@
+PREGATIRE -> CA 3 iunie 2024 nr 1
+
+
+
+
+2. Stiindu-va maestri ın ale algoritmicii si ale assembly-ului, sunteti provocati la o serie de ıncercari pentru a va dovedi valoarea. Fiti curajosi!
+
+a. Creati functia pow4, cu semnatura void pow4(int *n) care salveaza ın n rezultatul operatiei 4^n. Cu alte cuvinte, n va contine 4 la puterea valorii sale initiale. Este garantat ca rezultatul ridicarii la putere este o valoare pe 32 de biti. (3 puncte)
+
+b. Creati functia read_array, cu semnatura void read_array(int *n, int *v), care citeste de la tastatura un numar ıntreg n si apoi, n elemente ale vectorului v, folosind functia scanf. Apelati functia read_array(int *n, int *v) cu n, o variabila salvata pe stiva, iar v un vector declarat de voi ın ce sectiune doriti. Puteti considera ca
+numarul maxim de elemente citite este 100. (4 puncte)
+
+c. Creati functia print_array cu semnatura void print_array(int n, int *v), care printeaza cele n elemente ıntregi ale vectorului v. Apelati functia void print_array(int n, int *v) folosindu-va de vectorul citit la punctul anterior. (3 puncte)
+
+d. Creati functia map_array, cu semnatura void map_array(int n, int *v, void (*f)(int *)), care primeste un vector v cu n elemente si apeleaza functia f pentru fiecare element. Testati implementarea folosindu-va de vectorul citit la punctul b. si functia pow4 implementata la punctul a., ımpreuna cu functia de printare de la punctul c. Astfel, daca vectorul initial contine valorile 1, 2, 3, 4, ın urma aplicarii functiei pow4 pe elementele sale, v va contine valorile 4, 16, 64, 256. (5 puncte)
+Atentie! Este interzisa apelarea directa a functiei pow4 pe elementele vectorului. Folositi-va de functia trimisa ca parametru, pentru a pastra genericitatea!
+
+
+
+
+ex 2:
+
+
+
+extern printf
+extern scanf
+
+section .data
+    fmt_int db "%d", 0
+    fmt_int_newline db "%d", 10, 0
+    fmt_int_space db "%d ", 0
+    newline db 10, 0
+    N dd 5
+	v times 100 dd 0
+section .text
+global main
+
+; TODO a: Implement `void pow4(int *n)` which modifies the
+; integer pointed by n by calculating 4 to the power of n
+; In other words, *n = 4 ^ (*n)
+
+pow4:
+    push ebp
+    mov ebp, esp
+
+	mov eax, [ebp + 8] ; &n
+	mov ecx, [eax] ;n
+	shl ecx, 1 ; 2n
+	mov ebx, 1 ; 2
+	shl ebx, cl ; 2^2n !!!!!!!!!!!!!!
+	mov [eax], ebx
+	xor eax, eax
+    leave
+    ret
+
+; TODO b: Implement `void read_array(int *n, int *v)` which reads
+; an integer, stores it at the address pointed by n, and then proceeds
+; to read an array of n integers
+
+read_array:
+    push ebp
+    mov ebp, esp
+
+	mov eax, [ebp + 8] ; n
+	mov ebx, [ebp + 12] ; v
+	
+	; citirea n
+	pusha
+	push eax
+	push fmt_int
+	call scanf
+	add esp, 8
+	popa
+	xor ecx, ecx
+	mov eax, [eax]
+	loop1:
+	cmp ecx, eax
+	jge loop1end
+	
+	lea edx, [ebx + 4 * ecx]
+	pusha
+	push edx
+	push fmt_int
+	call scanf
+	add esp, 8
+	popa
+	inc ecx
+	jmp loop1
+	loop1end:
+    leave
+    ret
+
+; TODO c: Implement `void print_array(int n, int *v)` that prints
+; the elements of the array stored in v of n integers.
+
+print_array:
+    push ebp
+    mov ebp, esp
+
+	mov eax, [ebp + 8]
+	mov ebx, [ebp + 12]
+	xor ecx, ecx
+	loop2:
+        cmp ecx, eax
+        jge loop2end
+        
+        lea edx, [ebx + 4 * ecx]
+	mov edx, [edx]
+        pusha
+	push edx
+        push fmt_int_space
+        call printf
+        add esp, 8
+	popa
+        inc ecx
+	jmp loop2
+        loop2end:
+	push newline
+	call printf
+	add esp, 4
+
+    leave
+    ret
+
+; TODO d: Implement `void map_array(int n, int *v, void (*f)(int *))`
+; which updates every element of the array by applying the function
+; sent as the third parameter
+
+map_array:
+    push ebp
+    mov ebp, esp
+
+	mov eax, [ebp + 8]
+        mov ebx, [ebp + 12]
+	mov edi, [ebp + 16]
+        xor ecx, ecx
+        loop3:
+        cmp ecx, eax
+        jge loop3end
+        
+        lea edx, [ebx + 4 * ecx]
+        pusha
+        push edx
+        call edi
+        add esp, 4
+        popa
+        inc ecx
+        jmp loop3
+        loop3end:
+    leave
+    ret
+
+main:
+    push ebp
+    mov ebp, esp
+
+    ; TODO a: Call `pow4` with the value N, stored in .data
+    ; NOTE: You must print the modified value of N afterwards
+	push N
+	call pow4
+	add esp, 4
+	
+	mov eax, N
+	mov eax, [eax]
+	push eax
+	push fmt_int_newline
+	call printf
+	add esp, 8
+
+    ; TODO b: Call `read_array` with the address of a variable saved
+    ; on stack as the length of the array and the array saved in a
+    ; section of your choice
+    ; NOTE: You must print the array afterwards by using the function
+    ; implemented at TODO c
+	push v
+	push N
+	call read_array
+	add esp, 4
+	mov eax, N
+	mov eax, [eax]
+	push eax
+	call print_array
+	add esp, 8
+    ; TODO d: Call `map_array` with the length and array read at the
+    ; first task and `pow4` as the third argument
+    ; NOTE: You must print the array afterwards by using the function
+    ; implemented at TODO c
+        mov edi, pow4
+	push edi
+	push v
+	mov eax, N
+	mov eax, [eax]
+        push eax
+        call map_array
+        add esp, 12
+
+	push v
+        mov eax, N
+        mov eax, [eax]
+        push eax
+        call print_array
+        add esp, 8
+    ; Return 0.
+    xor eax, eax
+    leave
+    ret

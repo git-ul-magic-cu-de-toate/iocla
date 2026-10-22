@@ -1,0 +1,160 @@
+exam.pdf -> model 2023 -> sub 3 cu Gicu
+
+
+dec to bin => site ca sa imi vad numarul scris in biti
+
+
+
+task 1:
+
+%include "utils/printf32.asm"
+
+section .data
+    num dd 55555123
+
+section .text
+
+!!!!!!
+/// trb sa pun aici: // daca nu imi merge PRINTF32
+
+extern printf
+
+!!!!!!
+
+global main
+
+main:
+    push ebp
+    mov ebp, esp
+
+
+
+    ;TODO a: print least significant 2 bits of the second most significant byte of num
+	
+///// ideea 1: dar nu o voi folosi ca e mai greu
+putem sa folosim o masca
+
+exemplu de cum se fol o masca:
+
+dc am nr:             0101010101001011
+pot sa imi iau masca: 0000000000000011 , iar apoi daca fac and logic intre ele, o sa imi ramana doar cei mai putin semnificativi 2 biti din acel numar
+/////
+
+
+///// ideea 2: folosesc shiftarea:
+
+    mov eax, [num]
+    shl eax, 8 // shiftez la stanga cu 8 biti, ca sa imi sterg cel mai semnificativ octet, sa dispara
+    shr eax, 24 // il shiftez la dreapta cu 24 de biti ca sa mi l duc in capatul opus si acum o sa am doar 0-uri si in cel mai putin semnificativ bit o sa am octetul meu care imi trebuie (care era al doilea cel mai semnificativ octet)
+
+/// si acum fol o masca
+   
+    mov ebx, 1
+    and ebx, eax /// am fct un and logic
+/// acum ebx ori e 0, daca ultima cifra a lui eax e 0, ori e 1, daca ultimul bit e 1
+/// ebx e cel mai putin semnificativ bit
+
+    shr eax, 1 /// shiftez la dreapta cu inca un bit
+    mov ecx, 1 /// in ecx am al doilea cel mai putin semnificativ bit, care acum a devenit cel mai putin semnificativ bit ca sa lucrez cu el
+    and ecx, eax
+
+    * PRINTF32 /// nu ne strica registrele, pt ca nu e functie, e un macro
+/// la primul ex nu folosim functii
+
+    PRINTF32 `%d%d\n\0`, ecx, ebx
+
+
+
+
+
+
+
+    ;TODO b: print number of bits set on odd positions
+
+/// primul bit e cel mai din dreapta
+
+    xor ecx, ecx /// asta e contorul meu => i din for si il fac 0
+    xor ebx, ebx /// contor de biti, aici imi pun eu nr de biti setati
+    mov edi, 1 /// masca mea
+    
+loop_b:
+    cmp ecx, 32 /// vreau sa verific daca s a terminat i-ul meu, adica for-ul
+    jge end_b /// daca i >= 32, atunci mi s a terminat for-ul
+
+    mov eax, [num]
+    and eax, edi
+    cmp eax, 0 /// dc eax e 0, inseamna ca bitul meu nu a fost setat
+    jne increment_b /// dc nu e 0, vr sa mi-l incrementeze
+
+    add ecx, 2 /// daca e 0, fac i=i+2, adica merg din 2 in 2 prin numarul meu
+    shl edi, 2 /// shiftez si masca, ca bitul sa nu mai fie pe pozitia 0, sa fie pe pozitia 2 ????????????????
+    jmp loop_b
+
+
+increment_b: /// inseamna ca am gasit un bit setat pe o poz para
+    inc ebx
+    add ecx, 2
+    shl edi, 2
+    jmp loop_b
+    
+
+end_b:
+    PRINTF32 `%d\n\0`, ebx
+
+
+
+
+
+
+
+    ;TODO c: print number of groups of 3 consecutive bits set
+
+    xor ecx, ecx /// contor => i ul din for
+    xor ebx, ebx /// contor grupuri, pt cand am gasit 3 biti consec
+    mov edi, 1 /// masca mea
+    xor edx, edx /// contor biti consecutivi, asta ne spune cati biti consec am
+
+loop_c:
+    cmp ecx, 32
+    jge end_c
+ 
+    mov eax, [num]
+    and eax, edi
+    cmp eax, 0
+    jne increment_cons_bits
+
+/// dc bitul curent nu e 1
+    inc ecx
+    shl edi, 1 /// masca si ecx ul sa fie pe aceeasi pozitie
+    xor edx, edx /// resetez edx pt ca am 0 biti consecutivi de 1
+    jmp loop_c
+
+
+increment_cons_bits:  /// dc bitul curent e 1
+    inc edx
+    cmp edx, 3 /// vr sa vad daca am mai fct vreun grup de 3 sau nu
+    je increment_groups
+
+/// dc n am mai fct un grup de 3
+    inc ecx
+/// aici nu mai pun: xor edx, edx, pt ca am gasit un 1 si nu trb sa mai resetez edx ul, trec mai departe
+    shl edi, 1
+    jmp loop_c
+
+
+increment_groups:  /// am gasit un grup de 3
+    inc ebx
+    inc ecx
+    shl edi, 1
+/// daca am terminat un grup, nu il fac pe edx 0, pt ca spre ex, daca am ceva de genul: 0011110, eu aici o sa am primul grup de 3 de 1: 1110 si apoi cand trec la urmatorul bit si verific daca e 1, am deja 2 biti de 1 consecutivi din urma, si cu asta nou se fac 3 => 11110, deci eu trb sa il decrementez pe edx cu 1, ca sa fie 2 in loc de 3
+    dec edx /// sau pot sa zic si: mov edx, 2
+    jmp loop_c
+
+
+
+end_c:
+    PRINTF32 `%d\n\0`, ebx
+
+    xor eax, eax
+    leave
+    ret

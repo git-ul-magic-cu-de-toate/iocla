@@ -1,0 +1,197 @@
+Examen CA 3 iunie 2024 nr 1
+
+
+
+1. Punandu-si la punct lucrul cu manipularea bitilor, ıntr-un final glorios, studentii de an superior va provoaca la o competitie demna de intrat ın legenda.
+
+a. Fara a va folosi de ımpartire, verificati daca un ıntreg este par sau impar. Pentru testare, folositi variabila n, deja definita ın program. In cazul ın care aceasta este para, afisati even, altfel odd. (4 puncte)
+Atentie! Este interzisa folosirea instructiunii div.
+
+b. Salvati elementele aflate pe pozitii pare si care au ultima cifra 8 din vectorul arr, deja definit ın program, ıntr-un alt vector, res, definit de voi ın orice sectiune doriti. Afisati vectorul rezultat. (5 puncte)
+
+c. Afisati perechile de numere aflate pe pozitii consecutive din arr care au ultimul bit egal. (6 puncte)
+Spre exemplu, pentru sirul de numere 10, 4, 2, 3, 5, 1024, se va afisa
+10 4
+4 2
+3 5
+Explicatia este urmatoarea:
+10 = 1010; 4 = 100. Cele doua numere au ultimul bit identic, si anume, 0.
+4 = 100, 2 = 10. Cele doua numere au ultimul bit identic, si anume, 0.
+3 = 11, 5 = 101. Cele doua numere au ultimul bit identic, si anume, 1.
+
+
+
+
+ca sa verific daca e par sau impar pot sa verific ultimul bit, adica sa scriu:
+
+and eax, 1
+cmp eax, 1 ; par
+jne par
+
+PRINTF32 `impar\n\0`
+jmp done
+
+par:
+	PRINTF32 `par\n\0`
+
+
+
+
+
+task 1:
+
+
+
+%include "printf32.asm"
+
+section .data
+    n dd 0x10
+    arr dd 118, 2, 88, 16, 17, 13, 8, 15, 338, 78
+    len equ $-arr
+
+    ; !!!!!!!
+    ; trb sa adaug eu sirurile de caractere
+    even_msg db 'even', 0
+    odd_msg db 'odd', 0
+    ; !!!!!!!
+    fmt db "%d ", 0
+    format db '%d %d', 10, 0 ; format pt a afisa 2 nr intregi si newline
+
+
+; TODO b: Define res, an array of integers
+section .bss
+    res resd 10
+
+section .text
+extern printf
+global main
+
+main:
+    push ebp
+    mov ebp, esp
+
+
+    ; TODO a: Determine, without using div, whether a number is odd or even
+
+    mov eax, [n]
+    shl eax, 31 ; shiftez la stanga cu 31 ca sa raman doar cu cel mai nesemnificativ bit
+    ; daca cel mai nesemnificativ bit e 1, atunci nr e impar, altfel e par
+    shr eax, 31 ; acum am un nr de forma 00...0x 
+
+    mov ebx, 1 ; fol o masca
+    and ebx, eax ; fac un and logic
+    ; acum ebx ori e 0, daca am nr par, ori e 1 daca am nr impar
+
+    cmp ebx, 0
+    je par
+
+    ; dc am ajuns aici, atunci nr e impar
+    ; mov ecx, odd_msg
+    PRINTF32 `%s\n\0`, odd_msg
+    ; PRINTF32 `odd\n\x0`
+    jmp done
+
+par:
+    ; mov ecx, even_msg
+    PRINTF32 `%s\n\0`, even_msg
+    jmp done
+
+
+
+    ; TODO b: Save in res and print all the numbers from arr with an even
+    ; index and with the last digit 8
+
+    xor ecx, ecx ; contorul meu, i din for, cu care parcurg arr
+    xor ebx, ebx ; index pt vectorul res
+
+loop_b:
+    cmp ecx, 11 ; verific daca s a terminat for-ul meu pt arr
+    jge done ; dc i>=10, s a terminat for ul
+
+    mov eax, [arr + ecx * 4]
+    push eax ; salvez val init a lui eax
+
+    xor edx, edx ; il fac pe edx 0 ca sa pot sa il folosesc pt div
+    mov edi, 10 ; pun 10 in edi ca sa pot sa fac impartirea la 10
+    div edi ; impart ce e in eax la 10, catul e in eax, iar restul e in edx
+    ; => asta ma intereseaza daca e 8 sau nu
+    cmp edx, 8
+    jne skip_elem ; daca elem nu are ultima cifra 8, nu mai fac nimic si doar
+    ; trec la urmatorul index par din arr
+
+    ; dc elem din arr are ultima cifra 8
+    pop eax ; recuperez valoarea initiala a lui eax
+    mov [res + ebx * 4], eax ; pun elem in res
+
+    push ecx
+    push eax ; pregatesc valoarea pt printf
+    push fmt ; formatul pt printf
+    call printf
+    add esp, 8 ; curat stiva dupa printf
+    ;PRINTF32 `%d\n\0`, [res + ebx * 4]
+    pop ecx
+
+    add ebx, 1 ; cresc indexul pt vectorul res
+
+skip_elem:
+    add ecx, 2
+    jmp loop_b
+
+
+    ; TODO c: Print all the pairs of numbers on consecutive positions from arr
+    ; with the same last bit
+
+    xor ecx, ecx ; contor pt for ul meu
+
+loop_c:
+    cmp ecx, 10 ; verific daca am terminat for ul
+    jge done
+
+    mov eax, [arr + ecx * 4]
+    mov ebx, [arr + (ecx + 1) * 4]
+
+    test eax, 1 ; verific daca nr din eax are ultimul bit 1
+    jz even_first
+    jmp odd_first
+
+even_first:
+    test ebx, 1
+    jnz increment_index
+
+    ; vecinii au ultimii biti 1 amandoi
+    push ecx
+
+    ; ii afisez
+    push ebx
+    push eax
+    push format
+    call printf
+    add esp, 12
+    pop ecx
+    
+    jmp increment_index
+
+
+odd_first:
+    test ebx, 1
+    jz increment_index
+
+    push ecx
+
+    push ebx
+    push eax
+    push format
+    call printf
+    add esp, 12
+    pop ecx
+
+increment_index:
+    inc ecx
+    jmp loop_c
+
+
+done:
+    ; Return 0.
+    xor eax, eax
+    leave
+    ret

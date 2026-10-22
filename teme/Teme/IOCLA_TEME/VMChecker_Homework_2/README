@@ -1,0 +1,123 @@
+311CA SAVA Victor
+
+---
+
+# Debugging with Alex - Overview
+
+Our modern Tik-Tok brainrot specialist, Alex, is back!
+
+This homework focuses on low-level programming in x86 32-bit Assembly,
+specifically working with structures, memory, and control structures
+using only a limited set of registers.
+
+**Note:** The tasks were not solved in numerical order.
+The implementation followed this sequence: **Task 1 -> Task 4 -> Task 3 -> Task 2**,
+to get easier points first.
+As a result, some differences in implementation and assembly usage may be noticeable
+between tasks due to changes in approach and improved understanding.
+
+---
+
+## Task 1: Numbers
+
+This task is split into two subtasks that must be implemented
+in a single function: `remove_numbers`
+
+---
+
+### Subtask 1 - Odd numbers
+
+The first subtask's purpose is to filter out all odd numbers from the list of post IDs.
+
+This was done by checking whether the last bit is 1. If it's 1, that means that the post ID
+is even, if it's 0, that means that the ID is odd and is omitted from the list.
+
+### Subtask 2 - Power-numbers
+
+The second subtask's purpose is to remove all powers of 2 (like 2, 4, 8, 16...)
+from the already filtered list.
+
+This was done by using this expression: `number & (number - 1)`.
+If the expression returns 1 that means it's a power of 2 and is skipped from the filtered list.
+
+---
+
+## Task 2: Events
+
+This task involves working with a list of events. Each event contains a name, a date,
+and a flag indicating whether it is valid.
+
+These variables were implemented in a structure
+that contains the name, valid flag, and date.
+
+The task is divided into two subtasks:
+
+---
+
+### Subtask 1 - Date Validation
+
+Validate each event's date and update the valid field.
+
+This was done by checking whether
+the year is between 1990 and 2030, the month between 1 and 12 and the day between 1 and
+the length of the month.
+
+### Subtask 2 - Sort Events
+
+Sort the events in place based on specific criteria, using the valid flag and other fields.
+
+<sub><sup>This subtask beat me...</sup></sub>
+
+---
+
+## Task 3: Base64
+
+This task proposes encoding data using the base64 algorithm.
+
+This encoding method converts binary data into a text format that
+can be safely transmitted or stored, without risk of corruption.
+
+**Note: the length of the string is divisible by 3**
+
+### Implementation:
+
+- The main loop processes the input string in 3-byte chunks.
+
+- For each chunk, the following transformations are performed:
+
+  - First character: Extract the top 6 bits of the first byte.
+
+  - Second character: Combine the lower 2 bits of the first byte with the upper 4 bits of the second byte.
+
+  - Third character: Combine the lower 4 bits of the second byte with the upper 2 bits of the third byte.
+
+  - Fourth character: Extract the lower 6 bits of the third byte.
+
+- The result is written directly into the output buffer.
+
+---
+
+## Task 4: Sudoku
+
+This task involves validating a sudoku grid by row, by column and by box.
+
+### Implementation:
+
+The functions compute the offsets of the given row/column/box, then iterates
+over each element, checking that each number is between 1 and 9.
+
+It also computes the sum of the row/column/box, which should be 45 if all digits
+from 1 to 9 are present exactly once.
+
+If any value is invalid, or if the sum isn't 45, the function returns 2.
+Otherwise, it returns 1.
+
+The main problem is calculating the offsets for the char pointers.
+Here how that was done for each function:
+
+- `check_row`: The offset of the given row is calculated by multiplying the row index by 9.
+- `check_column`: The correct offset to the desired column is calculated by simply
+  adding the column index to the pointer
+- `check_box`: The offset is calculated like this `(box_no / 3) * 27 + (box_no % 3) * 3`.
+  Then, after the 3rd and 6th element, the index of the grid is changed by
+  adding 6 to account for the line change.

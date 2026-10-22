@@ -1,0 +1,162 @@
+inainte de orice apel extern, grija mare la pastrarea registrilor
+
+hex to dec
+https://www.rapidtables.com/convert/number/hex-to-decimal.html
+daca se da numar negativ in hex, se face mai intai hex->dec apoi dec->hex, se ia valoarea signed
+
+online ghidra
+https://dogbolt.org/
+
+buffer overflow (sau orice de afisat text pur)
+python3 -c "import sys; sys.stdout.buffer.write(b'A'*60 + b'\xF4\xF3\xF2\xF1' + b'A'*4 + b'\xb6\x94\x04\x08')"
+daca fac buffer overflow la o valoare numerice, atunci o dau pe dos (daca x = 0xDEADBEEF, atunci dau '\xef\xbe\xad\de')
+daca fac buffer overflow la un sir de caractere, atunci dau in ordinea normala (daca x = "ABC", atunci dau 'ABC')
+python3 -c "import sys; sys.stdout.buffer.write(b'A'*10 + b'Bye' + b'\x00')"
+
+formate printf / scanf
+https://www.freecodecamp.org/news/format-specifiers-in-c/
+exemplu format:
+section .data
+	fmt_int_nl db "%d", 10, 0 -> afiseaza un int cu newline
+
+daca ebx are incarcat in el un sir, si vreau sa citesc primul element din acel sir, pot face
+
+push ebx
+push fmt
+call scanf
+add esp, 8
+
+si in [ebx] se va afla valoarea citita
+
+alocare variabila locala:
+
+sub esp, 4
+mov eax, esp
+
+si acum in eax voi avea adresa unei variabile locale
+pentru a citi in ea pot face
+
+push eax
+push fmt
+call scanf
+add esp, 8
+mov ebx, [eax]
+
+exemplu mai concret de citire, doua variabile locale
+
+sub esp, 8
+lea ecx, [esp]
+lea edx, [esp + 4]
+push ecx
+push edx
+push read_fmt
+call scanf
+add esp, 12
+
+daca aux1, aux2 declarate global, merge mai simplu asa
+
+push aux2
+push aux1
+push read_fmt
+call scanf
+add esp, 12
+mov eax, [aux2]
+mov ebx, [aux1]
+
+shr imparte, shl inmulteste!
+
+nu uita cand faci div, ca edx sa fie 0!
+
+exemplu struct
+
+struc date
+    .zi resb 1
+    .luna resb 1
+    .an resw 1
+endstruc
+
+struc event
+    .nume resb 31
+    .valid resb 1
+    .date resb date_size
+endstruc
+
+pentru accesare cu offset
+
+[ebx + event.valid]
+[ebx + event.date + date.zi]
+
+
+castuire functie primita ca pointer
+
+char *(*plm)(int, int) = (char *(*)(int, int))f;
+char *x = plm(random1, random2);
+
+cu apel din main
+
+b((void *)f);
+
+daca vreau sa trimit un vector de functii
+
+void h(void *arr)
+{
+    unsigned int *ptr = (unsigned int *)arr;
+    void (*a)() = (void(*)())ptr[0];
+    void (*b)() = (void(*)())ptr[1];
+
+    a();
+    b();
+}
+
+cu apel
+
+unsigned int *v1 = malloc(2 * sizeof(unsigned int));
+v1[0] = (unsigned int)f1;
+v1[1] = (unsigned int)f2;
+h(v1);
+
+daca mi se cere sa reordonez campurile in struct, faci de la tip data mai mare, la tip data mai mic, indiferent daca e vector sau nush ce
+
+daca vreau struct fara padding
+struct a{
+ ...
+} __attribute__((packed));
+
+daca imi cere argumente in linia de comanda, argc e [ebp + 8], char **argv este [ebp + 12]
+pentru accesare primul argument (argv[1])
+
+mov eax, [ebp + 12]
+add eax, 4 ; primul este argv[0], care este numele executabilului!!
+mov eax, [eax]
+
+afisare adrese variabile
+
+int aux = 3;
+printf("adresa %p\n", &aux);
+
+accesare struct fara . si -> (e identic ca in asm!!)
+
+avem acest struct
+
+struct stud {
+    char name[256];
+    unsigned char grades[3];
+    float mean;
+}; => padding 4 de la float
+
+void print_stud(struct stud *stud)
+{
+    printf("Name: %s\n", (char *)stud);
+    unsigned char *note = (unsigned char *)stud + 256;
+    printf("Grades: %d %d %d\n", *(note), *(note + 1), *(note + 2));
+    float *medie = (float *)((unsigned char *)stud + 260);
+    printf("Mean: %f\n", *medie);
+}
+
+daca vreau toate simbolurile din BSS dintr un folder
+
+nm my-hierarchy/* | grep -e ' [bB] '
+
+cum identific calea bibliotecii C cu care este linkat un executabil
+
+ldd ./crackme

@@ -1,0 +1,303 @@
+Examen CA 3 iunie 2024 nr 2
+
+
+
+
+1. Stiind ca formatul binar este preferatul studentilor de anul I, colegii mai mari va testeaza anduranta si va propun o serie de exercitii cel putin interesante.
+
+a. Dandu-se doua numere a si b cu a mai mic strict decat b, determinati numarul de numere pare din intervalul ınchis [a, b], fara a va folosi de o operatie de ımpartire explicita (adica fara a va folosi de instructiunea div). (5 puncte)
+Hint: Operatia shr folosita ıntr-un anumit mod poate echivala cu ımpartirea la o putere a lui 2.
+
+b. Salvati elementele aflate pe pozitii impare si care se afla ın intervalul ınchis [a, b] din vectorul arr, deja definit ın program, ıntr-un alt vector, res, definit de voi ın orice sectiune doriti. Afisati vectorul rezultat. (4 puncte)
+
+c. Afisati perechile de numere aflate pe pozitii consecutive din arr care au ultimul bit diferit. (6 puncte)
+Spre exemplu, pentru sirul de numere 10, 4, 2, 3, 5, 16, se va afisa
+2 3
+5 16
+Explicatia este urmatoarea:
+2 = 10, 3 = 11. Cele doua numere au ultimul bit diferit.
+5 = 101, 16 = 10000. Cele doua numere au ultimul bit diferit.
+
+
+
+
+2. Viata de student presupune pariuri fara numar, de la cele cu tine ınsuti, la pacanele. Unii studenti pariaza ca assembly-ul este inutil si este de datoria voastra sa le demonstrati contrariul.
+
+a. Creati functia palindrome, cu semnatura int palindrome(int n) care verifica daca un numar este palindrom.
+Valoarea returnata este 1, daca numarul este palindrom sau 0, altfel. (3 puncte)
+
+b. Creati functia read_array, cu semnatura void read_array(int *v, int *n), care citeste de la tastatura un numar ıntreg n si apoi, n elemente ale vectorului v, folosind scanf. Apelati functia read_array(int *v, int *n) cu n, o variabila salvata pe stiva, iar v un vector declarat de voi ın ce sectiune doriti. Puteti considera ca numarul
+maxim de elemente citite este 100. (4 puncte)
+
+c. Creati functia print_array cu semnatura void print_array(int n, int *v), care printeaza cele n elemente ıntregi ale vectorului v. Apelati functia void print_array(int n, int *v) folosindu-va de vectorul citit la punctul anterior. (3 puncte)
+
+d. Creati functia filter_array, cu semnatura int filter_array(int n, int *v, int (*f)(int)), care salveaza ın alt vector, definit de voi ın ce sectiune doriti, elementele care produc rezultatul 1 ın urma aplicarii functiei f, primita ca paramatru. Functia filter_array ıntoarce numarul de elemente salvate ın noul vector. Testati implementarea folosindu-va de vectorul citit la punctul b. si functia palindrome implementata la punctul a., ımpreuna cu
+functia de printarea de la punctul c. Puteti considera lungimea maxima a noului vector ca fiind 100. Astfel, daca vectorul initial contine valorile 12, 2, 333, 45, ın urma aplicarii functiei palindrome pe elementele sale, noul vector rezultat va contine valorile 2, 33. (5 puncte)
+Atentie! Este interzisa apelarea directa a functiei palindrome pe elementele vectorului. Folositi-va de functia trimisa ca parametru, pentru a pastra genericitatea!
+
+
+
+
+
+task 1:
+
+
+%include "printf32.asm"
+
+section .data
+    a dd 0x10
+    b dd 0x25
+    arr dd 10, 4, 2, 3, 5, 16
+    len equ $-arr
+    fmt db "%d ", 0
+    format db '%d %d', 10, 0 ; format pt a afisa 2 nr intregi si newline
+
+; TODO b: Define res, an array of integers
+
+section .bss
+    res resb 50
+
+section .text
+extern printf
+global main
+
+main:
+    push ebp
+    mov ebp, esp
+
+
+    ; TODO a: Determine, without using div, the number of even numb in [a, b]
+    pusha
+    mov eax, [a]
+    mov esi, [a]
+    mov ebx, [b]
+
+    xor ecx, ecx ; contor pt for
+    xor edi, edi ; contor pt nr de numere pare
+    xor edx, edx
+
+    sub ebx, eax
+    inc ebx        
+    mov edx, ebx  ; in edx o sa am b-a+1
+    inc edx 
+
+loop_a:
+    cmp ecx, edx
+    jge print_a
+
+    shl eax, 31
+    shr eax, 31
+    xor ebx, ebx
+    mov ebx, 1 ; fol o masca
+    and ebx, eax ; fac un and logic
+    ; acum ebx ori e 0, daca am nr par, ori e 1 daca am nr impar
+
+    cmp ebx, 0
+    je par
+
+    inc ecx
+    inc esi
+    mov eax, esi
+    jmp loop_a
+
+par:
+    inc edi
+    inc ecx
+    inc esi
+    mov eax, esi
+    jmp loop_a
+
+
+print_a:
+    dec edi
+    push ecx
+    push edi
+    push fmt
+    call printf
+    add esp, 8
+    pop ecx
+    jmp done
+
+
+    ; TODO b: Save in res and print all the numbers from arr with an even
+    ; index and with the last digit 8
+    
+    xor ecx, ecx ; contor pt for
+    inc ecx ; il fac 1 ca sa merg din impar in impar
+    xor ebx, ebx 
+
+loop_b:
+    cmp ecx, 6 ; verific daca s a terminat for ul pt arr
+    jge done
+
+    mov eax, [arr + ecx * 4]
+
+    cmp eax, [a]
+    jge mai_mare_egal_cu_a
+
+    add ecx, 2
+    jmp loop_b
+
+
+mai_mare_egal_cu_a:
+    cmp eax, [b]
+    jle mai_mic_egal_cu_b
+
+    add ecx, 2
+    jmp loop_b
+
+mai_mic_egal_cu_b:
+    mov [res + ebx * 4], eax ; pun elem in res
+    xor edx, edx
+    mov edx, eax
+
+    push ecx
+    push edx
+    push fmt
+    call printf
+    add esp, 8
+    pop ecx
+
+    add ebx, 1 ; cresc indexul pt vect res
+    add ecx, 2
+    jmp loop_b
+
+
+    ; TODO c: Print all the pairs of numbers on consecutive positions from arr
+    ; with the last bit different
+    
+    xor ecx, ecx ; contor pt for ul meu
+
+loop_c:
+    cmp ecx, 5 ; verific daca am terminat for ul
+    jge done
+
+    mov eax, [arr + ecx * 4]
+    mov ebx, [arr + (ecx + 1) * 4]
+
+    test eax, 1 ; verific daca nr din eax are ultimul bit 1
+    jz even_first
+    jmp odd_first
+
+even_first:
+    test ebx, 1
+    jz increment_index
+
+    ; vecinii au ultimii biti diferiti
+    push ecx
+
+    ; ii afisez
+    push ebx
+    push eax
+    push format
+    call printf
+    add esp, 12
+    pop ecx
+    
+    jmp increment_index
+
+
+odd_first:
+    test ebx, 1
+    jnz increment_index
+
+    push ecx
+
+    push ebx
+    push eax
+    push format
+    call printf
+    add esp, 12
+    pop ecx
+
+increment_index:
+    inc ecx
+    jmp loop_c
+
+
+done:
+    popa
+    ; Return 0.
+    xor eax, eax
+    leave
+    ret
+
+
+
+
+
+
+
+task 2:
+
+extern printf
+extern scanf
+
+section .data
+    fmt_int db "%d", 0
+    fmt_int_newline db "%d", 10, 0
+    fmt_int_space db "%d ", 0
+    newline db 10, 0
+    N dd 23132
+
+section .bss
+    res resb 10000
+    length resb 4
+    res1 resb 10000
+    length1 resb 4
+
+section .text
+global main
+
+; TODO a: 
+palindrome:
+    push ebp
+    mov ebp, esp
+
+    mov eax, [ebp + 8]   ; mută valoarea lui n în eax
+    mov ebx, 0         ; ebx va fi folosit pentru a forma numărul inversat
+
+reverse_loop:
+    cmp eax, 0         ; verifica daca eax este 0
+    je compare         ; daca eax este 0, sare la compare
+    mov edx, 0
+    mov ecx, 10
+    div ecx            ; divide eax la 10, rezultatul în eax, restul în edx
+    imul ebx, 10       ; înmulțește ebx cu 10
+    add ebx, edx       ; adaugă restul în ebx (construiește numărul inversat)
+    jmp reverse_loop   ; repetă bucla
+
+compare:
+    mov eax, [ebp + 8]   ; restaurează n în eax
+    cmp eax, ebx       ; compară n original cu versiunea sa inversată
+    jne not_palindrome ; dacă sunt diferite, nu este palindrom
+    mov eax, 1         ; setează eax la 1 (este palindrom)
+    jmp end_palindrome
+
+not_palindrome:
+    xor eax, eax       ; setează eax la 0 (nu este palindrom)
+
+end_palindrome:
+    leave
+    ret
+
+main:
+    push ebp
+    mov ebp, esp
+
+    ; TODO a: call 'palindrome'
+    push dword [N]     ; împinge valoarea lui N pe stivă
+    call palindrome    ; apelează funcția palindrome
+    add esp, 4         ; curăță stiva (1 argument * 4 octeți)
+
+    ; afișează rezultatul
+    push eax           ; împinge rezultatul pe stivă pentru a-l printa
+    push fmt_int_newline
+    call printf
+    add esp, 8         ; curăță stiva (2 argumente * 4 octeți fiecare)
+
+    ; Return 0.
+    xor eax, eax
+    leave
+    ret
+

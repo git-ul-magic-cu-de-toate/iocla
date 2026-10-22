@@ -1,0 +1,19 @@
+README - TEMA2 - IOCLA
+
+Nume: Girnita Alexandra-Claudia
+Grupa: 322CC
+
+Implementare:
+
+1) Task1
+- la task 1 am extras litera din plain intr un registru de 1 byte (dimensiunea literei) si i am adaugat pasul stocat in edx (dl) ; daca se depaseste alfabetul, se scade 26 pentru o resetare a ciclului literelor
+2) Task2
+- la exercitiul 1 am parcurs intr un loop cate 2 elemente si am facut un label pentru fiecare dintre cerintele de sortare ; daca se observa ca elementele nu sunt in pozitia buna, se interschimba in label ul switch unde se modifica un flag ; daca s a facut cel putin o schimbare, se reia bucla pana cand toate elementele sunt sortate
+- la exercitiul 2 verific pentru fiecare element prio si in functie de aceasta adaug in vectorii globali info necesare (nr de procese + suma cuante timp) ; iterez apoi prin vectorii globali si fac pentru fiecare poz i impartirea, in cazul in care divizorul nu e 0, adaugand rezultatele in vectorul final
+3) Task3
+- la exercitiul 1 verificam in ce directie facem permutarea, apoi pentru fiecare directie verificam pe ce rotor ne aflam ; stocam in 2 registre cate 2 litere si la fiecare iteratie mutam litera actuala cu cea urmatoare, pentru fiecare coloana in parte de N ori (N fiind offset ul primit)
+4) Task4
+- trebuie sa verificam toate cazurile in care piesa se afla la margine sau intr un colt si sa le tratam corespunzator; daca se afla pe o pozitie normala incrementam sau decrementam cu 8 ca sa ne mutam pe linie si cu +1,-1 ca sa ne mutam pe coloana
+5) Bonus
+- foarte similar cu Task4, doar ca mai trebuie sa luam in calcul urmatoarele lucruri :
+- avem 2 cazuri particulare bonus pentru liniile 3 si 4 deoarece primele 4 linii (0,1,2,3) sunt la pozitia [ecx + 4] si urmatoarele la pozitia [ecx] ; ca sa ne mutam pe linii/coloane folosim shl si shr ; ca sa salvam mai multe pozitii folosim or in loc de mov

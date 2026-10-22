@@ -1,0 +1,82 @@
+inainte de orice apel extern, grija mare la pastrarea registrilor
+
+buffer overflow
+python3 -c "import sys; sys.stdout.buffer.write(b'A'*60 + b'\xF4\xF3\xF2\xF1' + b'A'*4 + b'\xb6\x94\x04\x08')"
+daca fac buffer overflow la o valoare numerice, atunci o dau pe dos (daca x = 0xDEADBEEF, atunci dau '\xef\xbe\xad\de')
+daca fac buffer overflow la un sir de caractere, atunci dau in ordinea normala (daca x = "ABC", atunci dau 'ABC')
+python3 -c "import sys; sys.stdout.buffer.write(b'A'*10 + b'Bye' + b'\x00')"
+
+hex to dec
+https://www.rapidtables.com/convert/number/hex-to-decimal.html
+daca se da numar negativ in hex, se face mai intai hex->dec apoi dec->hex, se ia valoarea signed
+
+formate printf / scanf
+https://www.freecodecamp.org/news/format-specifiers-in-c/
+exemplu format:
+section .data
+	fmt_int_nl db "%d", 10, 0 -> afiseaza un int cu newline
+
+daca ebx are incarcat in el un sir, si vreau sa citesc primul element din acel sir, pot face
+
+push ebx
+push fmt
+call scanf
+add esp, 8
+
+si in [ebx] se va afla valoarea citita
+
+alocare variabila locala:
+
+sub esp, 4
+mov eax, esp
+
+si acum in eax voi avea adresa unei variabile locale
+pentru a citi in ea pot face
+
+push eax
+push fmt
+call scanf
+add esp, 8
+mov ebx, [eax]
+
+shr imparte, shl inmulteste!
+
+nu uita cand faci div, ca edx sa fie 0!
+
+exemplu struct
+
+struc date
+    .zi resb 1
+    .luna resb 1
+    .an resw 1
+endstruc
+
+struc event
+    .nume resb 31
+    .valid resb 1
+    .date resb date_size
+endstruc
+
+pentru accesare cu offset
+
+[ebx + event.valid]
+[ebx + event.date + date.zi]
+
+Linking
+
+CFLAGS = -Wall -Wextra -m32 -Iinclude -fno-stack-protector -mpreferred-stack-boundary=2 -fno-PIC
+LDFLAGS = -m32 -no-pie
+
+
+# TODO: Compile main with task2
+all: main.o secret.o task2.o
+    $(CC) $(CFLAGS) $^ -o main
+
+
+main.o: main.c
+    $(CC) $(CFLAGS) $^ -c
+
+
+# TODO: Add rule for task2
+task2.o: task2.c
+    $(CC) $(CFLAGS) $< -c # $< inseamna sa dea target la fisierul dat

